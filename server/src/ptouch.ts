@@ -39,8 +39,10 @@ function colorInfo(code: number, names: ReadonlyMap<number, string>): ColorInfo 
 }
 
 /**
- * Parse the stdout of `ptouch-print --info` (run with LC_ALL=C). Format, from
- * ptouch-print.c:
+ * Parse the stdout of `ptouch-print --info` (run with LC_ALL=C). Two formats
+ * exist in the wild; both must parse:
+ *
+ * Older (e.g. the 1.4.x sibling checkout):
  *
  *   maximum printing width for this tape is 76px
  *   media type = 01
@@ -48,28 +50,44 @@ function colorInfo(code: number, names: ReadonlyMap<number, string>): ColorInfo 
  *   tape color = 01
  *   text color = 08
  *   error = 0000
+ *
+ * Newer releases prefix hex with 0x and append a decoded name:
+ *
+ *   media type = 0x01 (Laminated tape)
+ *   tape color = 0x01 (White)
+ *   ...
  */
 export function parseInfo(stdout: string): PrinterStatus {
-  const grab = (re: RegExp): string => {
+  const grab = (re: RegExp): RegExpMatchArray => {
     const m = stdout.match(re);
     if (!m || m[1] === undefined) {
       throw new Error(`could not parse ptouch-print --info output (missing ${re})`);
     }
-    return m[1];
+    return m;
   };
-  const printWidthPx = Number.parseInt(grab(/maximum printing width for this tape is (\d+)px/), 10);
-  const mediaType = Number.parseInt(grab(/media type = ([0-9a-fA-F]+)/), 16);
-  const mediaWidthMm = Number.parseInt(grab(/media width = (\d+) mm/), 10);
-  const tapeColor = Number.parseInt(grab(/tape color = ([0-9a-fA-F]+)/), 16);
-  const textColor = Number.parseInt(grab(/text color = ([0-9a-fA-F]+)/), 16);
-  const errorCode = Number.parseInt(grab(/error = ([0-9a-fA-F]+)/), 16);
+  const hexField = (label: string): { code: number; name: string | null } => {
+    const m = grab(new RegExp(`${label} = (?:0x)?([0-9a-fA-F]+)(?: \\(([^)]+)\\))?`));
+    return { code: Number.parseInt(m[1] ?? "", 16), name: m[2]?.trim() ?? null };
+  };
+  const printWidthPx = Number.parseInt(
+    grab(/maximum printing width for this tape is (\d+)\s?px/)[1] ?? "",
+    10,
+  );
+  const mediaWidthMm = Number.parseInt(grab(/media width = (\d+) mm/)[1] ?? "", 10);
+  const tapeColor = hexField("tape color");
+  const textColor = hexField("text color");
   return {
     printWidthPx,
     mediaWidthMm,
-    mediaType,
-    tapeColor: colorInfo(tapeColor, TAPE_COLOR_NAMES),
-    textColor: colorInfo(textColor, TEXT_COLOR_NAMES),
-    errorCode,
+    mediaType: hexField("media type").code,
+    // Prefer the name the printer/CLI reports; fall back to our table.
+    tapeColor: tapeColor.name !== null
+      ? { code: tapeColor.code, name: tapeColor.name.toLowerCase() }
+      : colorInfo(tapeColor.code, TAPE_COLOR_NAMES),
+    textColor: textColor.name !== null
+      ? { code: textColor.code, name: textColor.name.toLowerCase() }
+      : colorInfo(textColor.code, TEXT_COLOR_NAMES),
+    errorCode: hexField("error").code,
   };
 }
 

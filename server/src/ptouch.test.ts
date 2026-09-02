@@ -21,6 +21,32 @@ describe("parseInfo", () => {
     });
   });
 
+  it("parses the newer --info format (0x prefixes, decoded names)", () => {
+    // As emitted by e.g. the ptouch-print on seldon, driving a PT-P710BT.
+    const output = `PT-P710BT found on USB bus 1, device 4
+printer has 180 dpi, maximum printing width is 128 px
+maximum printing width for this tape is 76px
+media type = 0x01 (Laminated tape)
+media width = 12 mm
+tape color = 0x01 (White)
+text color = 0x08 (Black)
+error = 0x0000
+`;
+    expect(parseInfo(output)).toEqual({
+      printWidthPx: 76,
+      mediaWidthMm: 12,
+      mediaType: 1,
+      tapeColor: { code: 1, name: "white" },
+      textColor: { code: 8, name: "black" },
+      errorCode: 0,
+    });
+  });
+
+  it("prefers the CLI-reported color name over the built-in table", () => {
+    const output = INFO_OUTPUT.replace("tape color = 01", "tape color = 0x01 (Pearlescent)");
+    expect(parseInfo(output).tapeColor).toEqual({ code: 1, name: "pearlescent" });
+  });
+
   it("passes unknown color codes through with a null name", () => {
     const status = parseInfo(INFO_OUTPUT.replace("tape color = 01", "tape color = 7f"));
     expect(status.tapeColor).toEqual({ code: 0x7f, name: null });
