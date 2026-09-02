@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>labelcaster</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>labelcaster</h1>
+      <span id="printer-status" class="status status-unknown">checking printer…</span>
+    </header>
+
+    <section class="toolbar" aria-label="Tools">
+      <div class="tool-group" role="group" aria-label="Tool">
+        <button id="tool-select" class="tool active" type="button">Select</button>
+        <button id="tool-text" class="tool" type="button">Text</button>
+        <button id="tool-draw" class="tool" type="button">Draw</button>
+        <button id="tool-erase" class="tool" type="button">Erase</button>
+      </div>
+      <label class="control">Brush
+        <input id="brush-width" type="range" min="1" max="16" value="4" />
+      </label>
+      <label class="control">Font
+        <select id="font-family">
+          <option value="system-ui">System</option>
+          <option value="Arial">Arial</option>
+          <option value="Georgia">Georgia</option>
+          <option value="'Times New Roman'">Times New Roman</option>
+          <option value="'Courier New'">Courier New</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Impact">Impact</option>
+          <option value="'Comic Sans MS'">Comic Sans</option>
+        </select>
+      </label>
+      <label class="control">Size
+        <input id="font-size" type="number" min="6" max="128" value="40" />
+      </label>
+      <label class="control button-like">Image
+        <input id="image-file" type="file" accept="image/*" hidden />
+      </label>
+      <button id="delete-selection" type="button">Delete</button>
+      <button id="clear-canvas" type="button">Clear</button>
+    </section>
+
+    <section class="label-controls">
+      <label class="control" id="tape-picker-wrap" hidden>Tape
+        <select id="tape-picker"></select>
+      </label>
+      <span id="tape-info"></span>
+      <label class="control">Length (mm)
+        <input id="label-length" type="number" min="10" max="1000" step="1" value="60" />
+      </label>
+      <span id="length-readout"></span>
+    </section>
+
+    <main>
+      <div class="canvas-scroll">
+        <div id="canvas-holder"><canvas id="editor"></canvas></div>
+      </div>
+      <div class="preview-block">
+        <span class="preview-title">print preview (1-bit)</span>
+        <div class="canvas-scroll"><canvas id="preview"></canvas></div>
+      </div>
+    </main>
+
+    <footer>
+      <button id="print-button" type="button" disabled>Print</button>
+      <span id="print-result"></span>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

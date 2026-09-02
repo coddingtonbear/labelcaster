@@ -1,0 +1,152 @@
+:root {
+  --border: #d0d0d0;
+  --accent: #2563eb;
+  --bg: #f5f5f4;
+  font-family: system-ui, sans-serif;
+  color: #1c1917;
+}
+
+body {
+  margin: 0;
+  padding: 1rem 1.5rem;
+  background: var(--bg);
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.status {
+  font-size: 0.85rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: white;
+}
+
+.status-ok { border-color: #16a34a; color: #166534; }
+.status-error { border-color: #dc2626; color: #991b1b; }
+
+.toolbar,
+.label-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.tool-group {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+button,
+.button-like {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.8rem;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tool-group button {
+  border: none;
+  border-radius: 0;
+  border-right: 1px solid var(--border);
+}
+
+.tool-group button:last-child { border-right: none; }
+
+button.active,
+button:active {
+  background: var(--accent);
+  color: white;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.control select,
+.control input[type="number"] {
+  font: inherit;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  width: auto;
+}
+
+.control input[type="number"] { width: 4.5rem; }
+
+.canvas-scroll {
+  overflow-x: auto;
+  padding: 0.5rem 0;
+}
+
+#canvas-holder {
+  display: inline-block;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+  background: white;
+}
+
+.preview-block {
+  margin-top: 0.5rem;
+}
+
+.preview-title {
+  font-size: 0.8rem;
+  color: #57534e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+#preview {
+  image-rendering: pixelated;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+  background: white;
+}
+
+footer {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+#print-button {
+  font-size: 1rem;
+  padding: 0.5rem 1.5rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+}
+
+#print-result { font-size: 0.9rem; }
+#print-result.error { color: #991b1b; }
+#print-result.ok { color: #166534; }
+
+#tape-info, #length-readout {
+  font-size: 0.9rem;
+  color: #57534e;
+}

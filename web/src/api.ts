@@ -1,0 +1,58 @@
+/** Client for the labelcaster server. Shapes mirror server/src/types.ts. */
+
+export interface ColorInfo {
+  code: number;
+  name: string | null;
+}
+
+export interface PrinterStatus {
+  printWidthPx: number;
+  mediaWidthMm: number;
+  mediaType: number;
+  tapeColor: ColorInfo;
+  textColor: ColorInfo;
+  errorCode: number;
+}
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
+async function errorMessage(res: Response): Promise<string> {
+  try {
+    const body: unknown = await res.json();
+    if (typeof body === "object" && body !== null && "message" in body) {
+      const message = (body as { message: unknown }).message;
+      if (typeof message === "string") return message;
+    }
+  } catch {
+    // fall through to the generic message
+  }
+  return `request failed with status ${res.status}`;
+}
+
+export async function fetchStatus(): Promise<PrinterStatus> {
+  const res = await fetch("/api/status");
+  if (!res.ok) {
+    throw new ApiError(await errorMessage(res), res.status);
+  }
+  return (await res.json()) as PrinterStatus;
+}
+
+export async function printPng(png: Uint8Array): Promise<string> {
+  const res = await fetch("/api/print", {
+    method: "POST",
+    headers: { "content-type": "image/png" },
+    body: png as BodyInit,
+  });
+  if (!res.ok) {
+    throw new ApiError(await errorMessage(res), res.status);
+  }
+  const body = (await res.json()) as { output: string };
+  return body.output;
+}
