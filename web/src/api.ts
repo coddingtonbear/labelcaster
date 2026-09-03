@@ -36,6 +36,22 @@ async function errorMessage(res: Response): Promise<string> {
   return `request failed with status ${res.status}`;
 }
 
+export interface FontEntry {
+  family: string;
+  url: string;
+}
+
+/** Bundled fonts the server found in its fonts directory; [] on any failure. */
+export async function fetchFonts(): Promise<FontEntry[]> {
+  try {
+    const res = await fetch("/api/fonts");
+    if (!res.ok) return [];
+    return (await res.json()) as FontEntry[];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchStatus(): Promise<PrinterStatus> {
   const res = await fetch("/api/status");
   if (!res.ok) {

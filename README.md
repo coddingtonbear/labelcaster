@@ -33,6 +33,9 @@ npm workspaces:
   "label will be X mm long" readout. Canvas height comes from the printer's
   reported tape; without a printer it falls back to a manual tape picker
   (print disabled).
+- `fonts/` — bundled OFL fonts. Drop any `.ttf`/`.otf`/`.woff`/`.woff2` in
+  here and it appears in the font picker (filename = family name); see
+  `fonts/README.md`.
 
 ## Running
 
@@ -45,7 +48,7 @@ PTOUCH_PRINT_BIN=../ptouch-print/ptouch-print node server/dist/index.js
 ```
 
 Environment: `PTOUCH_PRINT_BIN` (default `ptouch-print` on PATH), `PORT`
-(default 8180). The binary needs libusb access to the printer — usually udev
+(default 8180), `LABELCASTER_FONTS_DIR` (default the repo's `fonts/`). The binary needs libusb access to the printer — usually udev
 rules or root (it detaches the `usblp` kernel driver itself).
 
 ## Background

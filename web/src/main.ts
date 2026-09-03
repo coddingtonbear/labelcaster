@@ -1,5 +1,6 @@
-import { ApiError, fetchStatus, printPng, type PrinterStatus } from "./api.js";
+import { ApiError, fetchFonts, fetchStatus, printPng, type PrinterStatus } from "./api.js";
 import { LabelEditor, type Tool } from "./editor.js";
+import { loadFonts } from "./fonts.js";
 import { formatMm, mmToPx, pxToMm } from "./length.js";
 import { encodeMonoPng } from "./monopng.js";
 import { TAPE_SIZES, tapeByWidthMm } from "./tapes.js";
@@ -131,6 +132,20 @@ async function initStatus(): Promise<void> {
   }
 }
 
+async function initFonts(): Promise<void> {
+  const families = await loadFonts(await fetchFonts());
+  const picker = element<HTMLSelectElement>("font-family");
+  for (const family of families) {
+    const option = document.createElement("option");
+    option.value = family;
+    option.textContent = family;
+    option.style.fontFamily = family;
+    picker.appendChild(option);
+  }
+  // Text objects created before the fonts finished loading re-render now.
+  schedulePreview();
+}
+
 tapePicker.addEventListener("change", () => {
   const tape = tapeByWidthMm(Number(tapePicker.value));
   if (tape) setUpEditor(tape.printAreaPx);
@@ -229,3 +244,4 @@ printButton.addEventListener("click", () => {
 
 updateLengthReadout();
 void initStatus();
+void initFonts();

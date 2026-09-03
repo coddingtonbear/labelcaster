@@ -1,12 +1,15 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifyStatic from "@fastify/static";
 import { existsSync } from "node:fs";
+import { listFonts } from "./fonts.js";
 import type { PtouchClient } from "./ptouch.js";
 
 export interface AppOptions {
   client: PtouchClient;
   /** Directory holding the built web UI; served at / when it exists. */
   webRoot?: string;
+  /** Directory of bundled font files; listed at /api/fonts, served at /fonts/. */
+  fontsDir?: string;
 }
 
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -41,6 +44,24 @@ export function buildApp(options: AppOptions): FastifyInstance {
     }
     return { ok: true, output: result.output };
   });
+
+  const fontsDir = options.fontsDir;
+  app.get("/api/fonts", async () => {
+    if (fontsDir === undefined) return [];
+    const fonts = await listFonts(fontsDir);
+    return fonts.map(({ family, file }) => ({
+      family,
+      url: `/fonts/${encodeURIComponent(file)}`,
+    }));
+  });
+
+  if (fontsDir !== undefined && existsSync(fontsDir)) {
+    app.register(fastifyStatic, {
+      root: fontsDir,
+      prefix: "/fonts/",
+      decorateReply: false,
+    });
+  }
 
   if (options.webRoot !== undefined && existsSync(options.webRoot)) {
     app.register(fastifyStatic, { root: options.webRoot });

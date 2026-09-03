@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterAll, describe, expect, it } from "vitest";
 import { buildApp } from "./app.js";
 import { PtouchClient, type Exec } from "./ptouch.js";
 
@@ -41,6 +44,38 @@ describe("GET /api/status", () => {
     const res = await appWith(noPrinterExec).inject({ method: "GET", url: "/api/status" });
     expect(res.statusCode).toBe(503);
     expect(res.json().message).toMatch(/ptouch_open/);
+  });
+});
+
+describe("GET /api/fonts", () => {
+  const cleanups: string[] = [];
+
+  afterAll(async () => {
+    for (const dir of cleanups) await rm(dir, { recursive: true, force: true });
+  });
+
+  it("lists bundled fonts with their serving URLs and serves the files", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "labelcaster-appfonts-"));
+    cleanups.push(dir);
+    await writeFile(join(dir, "Comic Neue.ttf"), "fake-font-bytes");
+    const app = buildApp({
+      client: new PtouchClient({ binary: "ptouch-print", exec: okExec }),
+      fontsDir: dir,
+    });
+
+    const list = await app.inject({ method: "GET", url: "/api/fonts" });
+    expect(list.statusCode).toBe(200);
+    expect(list.json()).toEqual([{ family: "Comic Neue", url: "/fonts/Comic%20Neue.ttf" }]);
+
+    const file = await app.inject({ method: "GET", url: "/fonts/Comic%20Neue.ttf" });
+    expect(file.statusCode).toBe(200);
+    expect(file.body).toBe("fake-font-bytes");
+  });
+
+  it("returns an empty list when no fonts directory is configured", async () => {
+    const res = await appWith(okExec).inject({ method: "GET", url: "/api/fonts" });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual([]);
   });
 });
 
