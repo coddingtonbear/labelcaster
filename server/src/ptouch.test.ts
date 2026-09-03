@@ -97,17 +97,38 @@ describe("PtouchClient", () => {
     expect(printArgs?.[2]).toMatch(/labelcaster-.*label\.png$/);
   });
 
-  it("passes --copies only when printing more than one", async () => {
+  it("prints copies as separate single-label jobs, never --copies", async () => {
     const calls: string[][] = [];
     const exec: Exec = (_binary, args) => {
       calls.push(args);
       return Promise.resolve({ code: 0, stdout: "", stderr: "" });
     };
     const client = new PtouchClient({ binary: "ptouch-print", exec });
-    await client.print(PNG, 3);
-    await client.print(PNG); // default: one copy
-    expect(calls[0]?.slice(0, 2)).toEqual(["--precut", "--copies=3"]);
-    expect(calls[1]?.slice(0, 2)).toEqual(["--precut", "--image"]);
+    await expect(client.print(PNG, 3)).resolves.toEqual({ ok: true, output: "" });
+    expect(calls).toHaveLength(3);
+    for (const args of calls) {
+      expect(args.slice(0, 2)).toEqual(["--precut", "--image"]);
+      expect(args.join(" ")).not.toContain("--copies");
+    }
+  });
+
+  it("stops on a mid-batch failure and names the failed copy", async () => {
+    let n = 0;
+    const exec: Exec = () => {
+      n++;
+      return Promise.resolve(
+        n === 2
+          ? { code: 1, stdout: "", stderr: "ptouch_sendraster() failed" }
+          : { code: 0, stdout: "", stderr: "" },
+      );
+    };
+    const client = new PtouchClient({ binary: "ptouch-print", exec });
+    const result = await client.print(PNG, 3);
+    expect(result).toEqual({
+      ok: false,
+      message: "ptouch-print exited 1 (copy 2 of 3): ptouch_sendraster() failed",
+    });
+    expect(n).toBe(2); // third copy not attempted
   });
 
   it("omits --precut when disabled (older ptouch-print builds)", async () => {

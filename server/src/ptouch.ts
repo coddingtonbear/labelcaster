@@ -183,33 +183,39 @@ export class PtouchClient {
     return parseInfo(result.stdout);
   }
 
+  /**
+   * Copies are printed as separate single-label jobs rather than via
+   * --copies: ptouch-print chains pages for --copies (no feed/cut between),
+   * which on auto-cut models leaves a long blank tail on every label. A
+   * fresh job per copy reproduces the known-good single print exactly, at
+   * the cost of the per-print leader scrap.
+   */
   private async printNow(png: Buffer, copies: number): Promise<PrintResult> {
     const dir = await mkdtemp(join(tmpdir(), "labelcaster-"));
     const file = join(dir, "label.png");
     try {
       await writeFile(file, png);
-      const args = [
-        ...(this.precut ? ["--precut"] : []),
-        // Only sent when >1: older ptouch-print builds don't know --copies.
-        ...(copies > 1 ? [`--copies=${copies}`] : []),
-        "--image",
-        file,
-      ];
-      const result = await this.exec(this.binary, args);
-      if (result.code !== 0) {
-        return {
-          ok: false,
-          message: `ptouch-print exited ${result.code}: ${(result.stderr || result.stdout).trim()}`,
-        };
+      const args = [...(this.precut ? ["--precut"] : []), "--image", file];
+      let lastOutput = "";
+      for (let copy = 1; copy <= copies; copy++) {
+        const which = copies > 1 ? ` (copy ${copy} of ${copies})` : "";
+        const result = await this.exec(this.binary, args);
+        if (result.code !== 0) {
+          return {
+            ok: false,
+            message: `ptouch-print exited ${result.code}${which}: ${(result.stderr || result.stdout).trim()}`,
+          };
+        }
+        // ptouch-print reports some failures on stdout with a zero exit code
+        // (e.g. "image is too large"), so treat any "failed"/"too large"
+        // text as an error even on success exit.
+        const combined = `${result.stdout}\n${result.stderr}`;
+        if (/failed|too large|nothing to print/i.test(combined)) {
+          return { ok: false, message: `${combined.trim()}${which}` };
+        }
+        lastOutput = result.stdout.trim();
       }
-      // ptouch-print reports some failures on stdout with a zero exit code
-      // (e.g. "image is too large"), so treat any "failed"/"too large" text
-      // as an error even on success exit.
-      const combined = `${result.stdout}\n${result.stderr}`;
-      if (/failed|too large|nothing to print/i.test(combined)) {
-        return { ok: false, message: combined.trim() };
-      }
-      return { ok: true, output: result.stdout.trim() };
+      return { ok: true, output: lastOutput };
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
