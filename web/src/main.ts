@@ -28,8 +28,22 @@ const previewTab = element<HTMLButtonElement>("view-preview");
 const printButton = element<HTMLButtonElement>("print-button");
 const printResult = element<HTMLSpanElement>("print-result");
 
-function displayZoom(heightPx: number): number {
-  return Math.max(2, Math.min(6, Math.round(300 / heightPx)));
+const mainColumn: HTMLElement = (() => {
+  const el = document.querySelector("main");
+  if (!(el instanceof HTMLElement)) throw new Error("missing <main>");
+  return el;
+})();
+
+/**
+ * Display zoom: aim for a comfortably tall canvas (~300px), but never wider
+ * than the layout column, so a typical label fits on screen — especially on
+ * phones, where fixed zoom used to mean heavy horizontal scrolling.
+ */
+function computeZoom(heightPx: number, widthPx: number): number {
+  const heightZoom = Math.max(2, Math.min(6, Math.round(300 / heightPx)));
+  const available = Math.max(200, mainColumn.clientWidth - 12);
+  const widthZoom = available / widthPx;
+  return Math.max(0.5, Math.min(heightZoom, widthZoom));
 }
 
 let editor: LabelEditor | undefined;
@@ -93,11 +107,29 @@ function schedulePreview(): void {
     const imageData = context.createImageData(width, height);
     maskToRgba(mask, imageData.data);
     context.putImageData(imageData, 0, 0);
-    const zoom = displayZoom(height);
+    const zoom = editor.displayZoom;
     previewCanvas.style.width = `${width * zoom}px`;
     previewCanvas.style.height = `${height * zoom}px`;
   });
 }
+
+/** Re-fit the zoom after anything that changes label size or window width. */
+function syncZoom(): void {
+  if (!editor) return;
+  const zoom = computeZoom(editor.labelHeightPx, editor.labelWidthPx);
+  if (Math.abs(zoom - editor.displayZoom) > 0.01) {
+    editor.setDisplayZoom(zoom);
+    schedulePreview();
+  }
+}
+
+// Observe the column rather than the window: it also catches the late
+// layout settling after fonts/CSS load, when load-time measurements lied.
+let resizeTimer: ReturnType<typeof setTimeout> | undefined;
+new ResizeObserver(() => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(syncZoom, 100);
+}).observe(mainColumn);
 
 function setUpEditor(heightPx: number): void {
   void editor?.dispose();
@@ -110,7 +142,7 @@ function setUpEditor(heightPx: number): void {
     canvasElement,
     widthPx: currentLengthPx(),
     heightPx,
-    zoom: displayZoom(heightPx),
+    zoom: computeZoom(heightPx, currentLengthPx()),
     onTextPlaced: () => setActiveTool("select"),
   });
   let previewQueued = false;
@@ -126,6 +158,7 @@ function setUpEditor(heightPx: number): void {
   editor = newEditor;
   currentSelection = null;
   setActiveTool("select");
+  syncZoom(); // re-measure: layout may have shifted since the zoom guess
   updateLengthReadout();
   schedulePreview();
 }
@@ -170,6 +203,7 @@ function applyStatus(status: PrinterStatus): void {
   } else if (editor.labelHeightPx !== status.printWidthPx) {
     // Tape was swapped: resize the canvas but keep the design.
     editor.setLabelHeight(status.printWidthPx);
+    syncZoom();
     schedulePreview();
   }
   if (!printing) printButton.disabled = false;
@@ -298,6 +332,7 @@ document.addEventListener("keydown", (event) => {
 
 lengthInput.addEventListener("change", () => {
   editor?.setLabelWidth(currentLengthPx());
+  syncZoom();
   updateLengthReadout();
   schedulePreview();
 });
@@ -308,6 +343,7 @@ element<HTMLButtonElement>("fit-length").addEventListener("click", () => {
   const fitted = fittedWidth(mask, width, height);
   if (fitted === null) return; // empty label; nothing to fit to
   editor.setLabelWidth(fitted);
+  syncZoom();
   lengthInput.value = pxToMm(fitted).toFixed(1);
   updateLengthReadout();
   schedulePreview();

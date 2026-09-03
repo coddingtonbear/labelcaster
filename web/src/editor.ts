@@ -30,7 +30,7 @@ const DEFAULT_FONT = "system-ui";
 
 export class LabelEditor {
   private readonly canvas: Canvas;
-  private readonly zoom: number;
+  private zoom: number;
   private widthPx: number;
   private heightPx: number;
   private tool: Tool = "select";
@@ -76,6 +76,21 @@ export class LabelEditor {
 
   get labelHeightPx(): number {
     return this.heightPx;
+  }
+
+  get displayZoom(): number {
+    return this.zoom;
+  }
+
+  /** Change display magnification; object coordinates stay in printer px. */
+  setDisplayZoom(zoom: number): void {
+    this.zoom = zoom;
+    this.canvas.setZoom(zoom);
+    this.canvas.setDimensions({
+      width: this.widthPx * zoom,
+      height: this.heightPx * zoom,
+    });
+    this.canvas.requestRenderAll();
   }
 
   onRendered(callback: () => void): void {
