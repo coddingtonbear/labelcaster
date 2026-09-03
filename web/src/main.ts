@@ -1,5 +1,6 @@
 import { ApiError, fetchFonts, fetchStatus, printPng, type PrinterStatus } from "./api.js";
 import { LabelEditor, type Tool } from "./editor.js";
+import { fittedWidth } from "./fit.js";
 import { loadFonts } from "./fonts.js";
 import { formatMm, mmToPx, pxToMm } from "./length.js";
 import { encodeMonoPng } from "./monopng.js";
@@ -215,6 +216,17 @@ document.addEventListener("keydown", (event) => {
 
 lengthInput.addEventListener("change", () => {
   editor?.setLabelWidth(currentLengthPx());
+  updateLengthReadout();
+  schedulePreview();
+});
+
+element<HTMLButtonElement>("fit-length").addEventListener("click", () => {
+  if (!editor) return;
+  const { mask, width, height } = editor.renderMask();
+  const fitted = fittedWidth(mask, width, height);
+  if (fitted === null) return; // empty label; nothing to fit to
+  editor.setLabelWidth(fitted);
+  lengthInput.value = pxToMm(fitted).toFixed(1);
   updateLengthReadout();
   schedulePreview();
 });
