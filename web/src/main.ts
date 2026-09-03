@@ -385,8 +385,9 @@ function setFooterStatus(message: string, kind: "" | "ok" | "error" = ""): void 
 }
 
 const designNameInput = element<HTMLInputElement>("design-name");
+const savePopover = element<HTMLDivElement>("save-popover");
 
-element<HTMLButtonElement>("design-download").addEventListener("click", () => {
+function downloadDesign(): void {
   if (!editor) return;
   const text = serializeDesignFile(editor.serializeDesign());
   const blob = new Blob([text], { type: "application/json" });
@@ -396,7 +397,32 @@ element<HTMLButtonElement>("design-download").addEventListener("click", () => {
   link.download = filenameForDesign(designNameInput.value);
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  savePopover.hidden = true;
+}
+
+element<HTMLButtonElement>("design-download").addEventListener("click", (event) => {
+  // Saving without a name yet: ask for one instead of silently using the
+  // timestamp default. Enter (or the popover's Download) then saves.
+  if (designNameInput.value.trim() === "" && savePopover.hidden) {
+    event.stopPropagation();
+    savePopover.hidden = false;
+    designNameInput.focus();
+    return;
+  }
+  downloadDesign();
 });
+
+element<HTMLButtonElement>("design-name-toggle").addEventListener("click", (event) => {
+  event.stopPropagation();
+  savePopover.hidden = !savePopover.hidden;
+  if (!savePopover.hidden) designNameInput.select();
+});
+
+element<HTMLButtonElement>("design-download-confirm").addEventListener("click", downloadDesign);
+designNameInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") downloadDesign();
+});
+savePopover.addEventListener("click", (event) => event.stopPropagation());
 
 const designFileInput = element<HTMLInputElement>("design-file");
 designFileInput.addEventListener("change", () => {
@@ -456,6 +482,7 @@ cutmarkCheckbox.addEventListener("change", updatePrintLabel);
 copiesPopover.addEventListener("click", (event) => event.stopPropagation());
 document.addEventListener("click", () => {
   copiesPopover.hidden = true;
+  savePopover.hidden = true;
 });
 
 printButton.addEventListener("click", () => {

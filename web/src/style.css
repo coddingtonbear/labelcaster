@@ -269,7 +269,7 @@ footer {
   opacity: 0.5;
 }
 
-#copies-popover {
+.popover {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
@@ -285,8 +285,23 @@ footer {
   white-space: nowrap;
 }
 
-#copies-popover[hidden] {
+.popover[hidden] {
   display: none !important;
+}
+
+.save-group {
+  position: relative;
+  display: inline-flex;
+}
+
+.save-group > .icon-btn:first-child {
+  border-radius: 6px 0 0 6px;
+  border-right: none;
+}
+
+#design-name-toggle {
+  border-radius: 0 6px 6px 0;
+  padding: 0.4rem 0.45rem;
 }
 
 .cutmark-option {
@@ -331,6 +346,7 @@ footer {
 
   .tool-group,
   header .button-like,
+  .save-group,
   .print-group {
     order: 1;
   }
