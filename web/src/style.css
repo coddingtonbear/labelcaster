@@ -35,6 +35,8 @@ h1 {
 }
 
 .icon-btn {
+  display: inline-flex;
+  align-items: center;
   font-size: 1.05rem;
   line-height: 1;
   padding: 0.4rem 0.6rem;
@@ -209,4 +211,60 @@ footer {
 #tape-info, #length-readout {
   font-size: 0.9rem;
   color: #57534e;
+}
+
+/* --- Small screens ---------------------------------------------------- */
+
+@media (max-width: 700px) {
+  body {
+    padding: 0.6rem 0.75rem;
+  }
+
+  header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Row 1: title stretched so the status chip sits at the right edge and
+     everything after wraps; row 2: tools, image, Print. */
+  h1 {
+    flex: 1;
+    font-size: 1.15rem;
+  }
+
+  header .spacer {
+    display: none;
+  }
+
+  #printer-status {
+    order: 0;
+  }
+
+  .tool-group,
+  header .button-like,
+  #print-button {
+    order: 1;
+  }
+
+  #print-button {
+    margin-left: auto;
+  }
+
+  /* Bigger touch targets */
+  .icon-btn {
+    padding: 0.6rem 0.85rem;
+    font-size: 1.15rem;
+  }
+
+  .ctx-hint {
+    display: none;
+  }
+
+  #context-row {
+    padding: 0.25rem 0.5rem;
+  }
+
+  .label-strip .spacer {
+    display: none;
+  }
 }
