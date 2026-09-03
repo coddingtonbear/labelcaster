@@ -79,6 +79,15 @@ h1 {
   font-weight: bold;
 }
 
+.style-btn {
+  width: 2.1rem;
+  font-family: Georgia, serif;
+}
+
+.style-b { font-weight: bold; }
+.style-i { font-style: italic; }
+.style-u { text-decoration: underline; }
+
 #context-row {
   display: flex;
   align-items: center;

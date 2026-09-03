@@ -60,6 +60,25 @@ const ctxDraw = element<HTMLDivElement>("ctx-draw");
 const fontFamilyInput = element<HTMLSelectElement>("font-family");
 const fontSizeInput = element<HTMLInputElement>("font-size");
 
+const styleButtons = {
+  bold: element<HTMLButtonElement>("style-bold"),
+  italic: element<HTMLButtonElement>("style-italic"),
+  underline: element<HTMLButtonElement>("style-underline"),
+} as const;
+
+function showTextStyles(styles: { bold: boolean; italic: boolean; underline: boolean }): void {
+  for (const key of ["bold", "italic", "underline"] as const) {
+    styleButtons[key].classList.toggle("active", styles[key]);
+  }
+}
+
+for (const key of ["bold", "italic", "underline"] as const) {
+  styleButtons[key].addEventListener("click", () => {
+    const styles = editor?.toggleTextStyle(key);
+    if (styles) showTextStyles(styles);
+  });
+}
+
 function updateContext(): void {
   const showText = currentTool === "text" || currentSelection?.kind === "text";
   const showDraw = currentTool === "draw" || currentTool === "erase";
@@ -73,6 +92,9 @@ function selectionChanged(selection: Selection): void {
   if (selection?.kind === "text") {
     fontFamilyInput.value = selection.fontFamily;
     fontSizeInput.value = String(selection.fontSize);
+    showTextStyles(selection);
+  } else {
+    showTextStyles({ bold: false, italic: false, underline: false });
   }
   updateContext();
 }

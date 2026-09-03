@@ -39,6 +39,8 @@ async function errorMessage(res: Response): Promise<string> {
 export interface FontEntry {
   family: string;
   url: string;
+  /** Variable font: register with a full weight range for real bold. */
+  variable: boolean;
 }
 
 /** Bundled fonts the server found in its fonts directory; [] on any failure. */

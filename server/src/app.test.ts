@@ -65,7 +65,9 @@ describe("GET /api/fonts", () => {
 
     const list = await app.inject({ method: "GET", url: "/api/fonts" });
     expect(list.statusCode).toBe(200);
-    expect(list.json()).toEqual([{ family: "Comic Neue", url: "/fonts/Comic%20Neue.ttf" }]);
+    expect(list.json()).toEqual([
+      { family: "Comic Neue", url: "/fonts/Comic%20Neue.ttf", variable: false },
+    ]);
 
     const file = await app.inject({ method: "GET", url: "/fonts/Comic%20Neue.ttf" });
     expect(file.statusCode).toBe(200);

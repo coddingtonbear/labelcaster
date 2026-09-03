@@ -2,12 +2,16 @@ import type { FontEntry } from "./api.js";
 
 /** The slice of FontFace/document.fonts this module needs, for testability. */
 export interface FontRegistrar {
-  load(family: string, url: string): Promise<void>;
+  load(family: string, url: string, variable: boolean): Promise<void>;
 }
 
 const browserRegistrar: FontRegistrar = {
-  async load(family, url) {
-    const face = new FontFace(family, `url("${url}")`);
+  async load(family, url, variable) {
+    // A variable font registered with its full weight range serves real bold
+    // faces; a static font must NOT claim the range, or bold text would
+    // render at regular weight instead of being synthesized.
+    const descriptors: FontFaceDescriptors = variable ? { weight: "100 900" } : {};
+    const face = new FontFace(family, `url("${url}")`, descriptors);
     await face.load();
     document.fonts.add(face);
   },
@@ -25,7 +29,7 @@ export async function loadFonts(
   const results = await Promise.all(
     entries.map(async (entry) => {
       try {
-        await registrar.load(entry.family, entry.url);
+        await registrar.load(entry.family, entry.url, entry.variable);
         return entry.family;
       } catch (error) {
         console.warn(`font "${entry.family}" failed to load:`, error);

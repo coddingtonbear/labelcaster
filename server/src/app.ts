@@ -57,9 +57,10 @@ export function buildApp(options: AppOptions): FastifyInstance {
   app.get("/api/fonts", async () => {
     if (fontsDir === undefined) return [];
     const fonts = await listFonts(fontsDir);
-    return fonts.map(({ family, file }) => ({
+    return fonts.map(({ family, file, variable }) => ({
       family,
       url: `/fonts/${encodeURIComponent(file)}`,
+      variable,
     }));
   });
 

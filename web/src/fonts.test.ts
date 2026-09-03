@@ -2,24 +2,24 @@ import { describe, expect, it } from "vitest";
 import { loadFonts, type FontRegistrar } from "./fonts.js";
 
 describe("loadFonts", () => {
-  it("returns families that loaded, preserving order", async () => {
-    const loaded: [string, string][] = [];
+  it("returns families that loaded, passing the variable flag through", async () => {
+    const loaded: [string, string, boolean][] = [];
     const registrar: FontRegistrar = {
-      load: async (family, url) => {
-        loaded.push([family, url]);
+      load: async (family, url, variable) => {
+        loaded.push([family, url, variable]);
       },
     };
     const families = await loadFonts(
       [
-        { family: "Oswald", url: "/fonts/Oswald.ttf" },
-        { family: "Caveat", url: "/fonts/Caveat.ttf" },
+        { family: "Oswald", url: "/fonts/Oswald.ttf", variable: true },
+        { family: "Caveat", url: "/fonts/Caveat.ttf", variable: false },
       ],
       registrar,
     );
     expect(families).toEqual(["Oswald", "Caveat"]);
     expect(loaded).toEqual([
-      ["Oswald", "/fonts/Oswald.ttf"],
-      ["Caveat", "/fonts/Caveat.ttf"],
+      ["Oswald", "/fonts/Oswald.ttf", true],
+      ["Caveat", "/fonts/Caveat.ttf", false],
     ]);
   });
 
@@ -31,9 +31,9 @@ describe("loadFonts", () => {
     };
     const families = await loadFonts(
       [
-        { family: "Inter", url: "/fonts/Inter.ttf" },
-        { family: "Broken", url: "/fonts/Broken.ttf" },
-        { family: "Lora", url: "/fonts/Lora.ttf" },
+        { family: "Inter", url: "/fonts/Inter.ttf", variable: true },
+        { family: "Broken", url: "/fonts/Broken.ttf", variable: false },
+        { family: "Lora", url: "/fonts/Lora.ttf", variable: true },
       ],
       registrar,
     );

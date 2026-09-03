@@ -9,11 +9,25 @@ export interface LabelMask {
   height: number;
 }
 
+export interface TextStyles {
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+}
+
 /** What is currently selected, for context-sensitive UI. */
 export type Selection =
-  | { kind: "text"; fontFamily: string; fontSize: number }
+  | ({ kind: "text"; fontFamily: string; fontSize: number } & TextStyles)
   | { kind: "other" }
   | null;
+
+function stylesOf(text: IText): TextStyles {
+  return {
+    bold: text.fontWeight === "bold",
+    italic: text.fontStyle === "italic",
+    underline: text.underline === true,
+  };
+}
 
 export interface EditorOptions {
   canvasElement: HTMLCanvasElement;
@@ -103,7 +117,12 @@ export class LabelEditor {
       if (!active) {
         callback(null);
       } else if (active instanceof IText) {
-        callback({ kind: "text", fontFamily: active.fontFamily, fontSize: active.fontSize });
+        callback({
+          kind: "text",
+          fontFamily: active.fontFamily,
+          fontSize: active.fontSize,
+          ...stylesOf(active),
+        });
       } else {
         callback({ kind: "other" });
       }
@@ -149,6 +168,29 @@ export class LabelEditor {
       active.set("fontSize", px);
       this.canvas.requestRenderAll();
     }
+  }
+
+  /**
+   * Toggle a style on the selected text; returns the new styles, or null when
+   * no text is selected. Bold uses the real face for variable fonts (loaded
+   * with a full weight range) and browser synthesis otherwise; italic is
+   * always synthesized — no italic faces are bundled.
+   */
+  toggleTextStyle(style: keyof TextStyles): TextStyles | null {
+    const active = this.canvas.getActiveObject();
+    if (!(active instanceof IText)) return null;
+    // Clear any per-character styling so the object-level toggle wins.
+    active.styles = {};
+    if (style === "bold") {
+      active.set("fontWeight", active.fontWeight === "bold" ? "normal" : "bold");
+    } else if (style === "italic") {
+      active.set("fontStyle", active.fontStyle === "italic" ? "normal" : "italic");
+    } else {
+      active.set("underline", active.underline !== true);
+    }
+    active.initDimensions();
+    this.canvas.requestRenderAll();
+    return stylesOf(active);
   }
 
   async addImage(file: File): Promise<void> {
