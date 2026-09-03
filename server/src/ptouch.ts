@@ -142,6 +142,7 @@ export class PtouchClient {
   private readonly binary: string;
   private readonly precut: boolean;
   private readonly exec: Exec;
+  private queue: Promise<unknown> = Promise.resolve();
 
   constructor(options: PtouchClientOptions) {
     this.binary = options.binary;
@@ -149,7 +150,30 @@ export class PtouchClient {
     this.exec = options.exec ?? execPtouch;
   }
 
-  async status(): Promise<PrinterStatus> {
+  /**
+   * Serialize all ptouch-print invocations: the status poller and a print
+   * job talk to the same USB device, and concurrent libusb claims would
+   * collide mid-print.
+   */
+  private enqueue<T>(task: () => Promise<T>): Promise<T> {
+    const run = (): Promise<T> => task();
+    const result = this.queue.then(run, run);
+    this.queue = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  }
+
+  status(): Promise<PrinterStatus> {
+    return this.enqueue(() => this.statusNow());
+  }
+
+  print(png: Buffer): Promise<PrintResult> {
+    return this.enqueue(() => this.printNow(png));
+  }
+
+  private async statusNow(): Promise<PrinterStatus> {
     const result = await this.exec(this.binary, ["--info"]);
     if (result.code !== 0) {
       throw new Error(
@@ -159,7 +183,7 @@ export class PtouchClient {
     return parseInfo(result.stdout);
   }
 
-  async print(png: Buffer): Promise<PrintResult> {
+  private async printNow(png: Buffer): Promise<PrintResult> {
     const dir = await mkdtemp(join(tmpdir(), "labelcaster-"));
     const file = join(dir, "label.png");
     try {

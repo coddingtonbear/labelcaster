@@ -170,6 +170,16 @@ export class LabelEditor {
     this.canvas.requestRenderAll();
   }
 
+  /** Resize for a different tape without discarding the label's objects. */
+  setLabelHeight(heightPx: number): void {
+    this.heightPx = heightPx;
+    this.canvas.setDimensions({
+      width: this.widthPx * this.zoom,
+      height: heightPx * this.zoom,
+    });
+    this.canvas.requestRenderAll();
+  }
+
   setLabelWidth(widthPx: number): void {
     this.widthPx = widthPx;
     this.canvas.setDimensions({

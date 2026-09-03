@@ -131,18 +131,22 @@ function setUpEditor(heightPx: number): void {
 }
 
 // --- Printer status / tape selection -----------------------------------
+//
+// The printer powers itself off when idle (and may be off when the page
+// loads), so status is polled and the UI follows it live in both directions.
 
-function showOfflineTapePicker(message: string): void {
-  statusChip.textContent = message;
-  statusChip.className = "status status-error";
+let printing = false;
+
+function showOfflineTapePicker(): void {
   tapePickerWrap.hidden = false;
-  tapePicker.innerHTML = "";
-  for (const tape of TAPE_SIZES) {
-    const option = document.createElement("option");
-    option.value = String(tape.widthMm);
-    option.textContent = `${tape.widthMm} mm (${tape.printAreaPx}px)`;
-    if (tape.widthMm === 12) option.selected = true;
-    tapePicker.appendChild(option);
+  if (tapePicker.options.length === 0) {
+    for (const tape of TAPE_SIZES) {
+      const option = document.createElement("option");
+      option.value = String(tape.widthMm);
+      option.textContent = `${tape.widthMm} mm (${tape.printAreaPx}px)`;
+      if (tape.widthMm === 12) option.selected = true;
+      tapePicker.appendChild(option);
+    }
   }
   tapeInfo.textContent = "no printer — pick the tape size manually";
   const selected = tapeByWidthMm(Number(tapePicker.value));
@@ -151,7 +155,6 @@ function showOfflineTapePicker(message: string): void {
 
 function applyStatus(status: PrinterStatus): void {
   printerAvailable = true;
-  printButton.disabled = false;
   statusChip.textContent = "printer connected";
   statusChip.className = "status status-ok";
   tapePickerWrap.hidden = true;
@@ -162,20 +165,43 @@ function applyStatus(status: PrinterStatus): void {
     .filter((part): part is string => part !== null)
     .join(" ");
   tapeInfo.textContent = `${status.mediaWidthMm} mm tape, ${status.printWidthPx}px printable${colors ? ` — ${colors}` : ""}`;
-  setUpEditor(status.printWidthPx);
+  if (!editor) {
+    setUpEditor(status.printWidthPx);
+  } else if (editor.labelHeightPx !== status.printWidthPx) {
+    // Tape was swapped: resize the canvas but keep the design.
+    editor.setLabelHeight(status.printWidthPx);
+    schedulePreview();
+  }
+  if (!printing) printButton.disabled = false;
 }
 
-async function initStatus(): Promise<void> {
+function markOffline(message: string): void {
+  printerAvailable = false;
+  if (!printing) printButton.disabled = true;
+  statusChip.textContent = message;
+  statusChip.className = "status status-error";
+  // Keep an existing canvas (and its last-known tape size) untouched; only
+  // fall back to the manual picker when no editor exists yet.
+  if (!editor) showOfflineTapePicker();
+}
+
+async function checkStatus(): Promise<void> {
   try {
     applyStatus(await fetchStatus());
   } catch (error) {
-    const message =
-      error instanceof ApiError && error.status === 503 ? "printer not found" : "server offline";
-    printerAvailable = false;
-    printButton.disabled = true;
-    showOfflineTapePicker(message);
+    markOffline(
+      error instanceof ApiError && error.status === 503 ? "printer off" : "server unreachable",
+    );
   }
 }
+
+const STATUS_POLL_MS = 5000;
+setInterval(() => {
+  if (!document.hidden) void checkStatus();
+}, STATUS_POLL_MS);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) void checkStatus();
+});
 
 async function initFonts(): Promise<void> {
   const families = await loadFonts(await fetchFonts());
@@ -291,7 +317,8 @@ element<HTMLButtonElement>("fit-length").addEventListener("click", () => {
 
 printButton.addEventListener("click", () => {
   void (async () => {
-    if (!editor || !printerAvailable) return;
+    if (!editor || !printerAvailable || printing) return;
+    printing = true;
     printButton.disabled = true;
     printResult.textContent = "printing…";
     printResult.className = "";
@@ -305,11 +332,12 @@ printButton.addEventListener("click", () => {
       printResult.textContent = error instanceof Error ? error.message : String(error);
       printResult.className = "error";
     } finally {
-      printButton.disabled = false;
+      printing = false;
+      printButton.disabled = !printerAvailable;
     }
   })();
 });
 
 updateLengthReadout();
-void initStatus();
+void checkStatus();
 void initFonts();

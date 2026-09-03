@@ -108,6 +108,22 @@ describe("PtouchClient", () => {
     expect(printArgs?.[0]).toBe("--image");
   });
 
+  it("serializes print and status so USB access never overlaps", async () => {
+    const order: string[] = [];
+    const exec: Exec = async (_binary, args) => {
+      const op = args[0] ?? "?";
+      order.push(`start:${op}`);
+      await new Promise((resolve) => setTimeout(resolve, 15));
+      order.push(`end:${op}`);
+      return args.includes("--info")
+        ? { code: 0, stdout: INFO_OUTPUT, stderr: "" }
+        : { code: 0, stdout: "", stderr: "" };
+    };
+    const client = new PtouchClient({ binary: "ptouch-print", exec });
+    await Promise.all([client.print(PNG), client.status()]);
+    expect(order).toEqual(["start:--precut", "end:--precut", "start:--info", "end:--info"]);
+  });
+
   it("treats 'image is too large' stdout as a failure even on exit 0", async () => {
     const client = new PtouchClient({
       binary: "ptouch-print",
