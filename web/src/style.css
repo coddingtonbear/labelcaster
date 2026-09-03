@@ -69,9 +69,13 @@ h1 {
 .icon-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  /* Fixed height so emoji glyphs (taller line metrics) don't inflate their
+     buttons past the text-glyph ones. */
+  height: 2.2rem;
   font-size: 1.05rem;
   line-height: 1;
-  padding: 0.4rem 0.6rem;
+  padding: 0 0.6rem;
 }
 
 .tool-text-glyph {
@@ -158,13 +162,14 @@ button,
   cursor: pointer;
 }
 
-.tool-group button {
+.tool-group > button,
+.tool-group > .button-like {
   border: none;
   border-radius: 0;
   border-right: 1px solid var(--border);
 }
 
-.tool-group button:last-child { border-right: none; }
+.tool-group > :last-child { border-right: none; }
 
 button.active,
 button:active {
@@ -357,7 +362,8 @@ footer {
 
   /* Bigger touch targets */
   .icon-btn {
-    padding: 0.6rem 0.85rem;
+    height: 2.7rem;
+    padding: 0 0.85rem;
     font-size: 1.15rem;
   }
 
