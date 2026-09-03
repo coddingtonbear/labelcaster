@@ -1,5 +1,5 @@
 import { ApiError, fetchFonts, fetchStatus, printPng, type PrinterStatus } from "./api.js";
-import { LabelEditor, type Tool } from "./editor.js";
+import { LabelEditor, type Selection, type Tool } from "./editor.js";
 import { fittedWidth } from "./fit.js";
 import { loadFonts } from "./fonts.js";
 import { formatMm, mmToPx, pxToMm } from "./length.js";
@@ -34,6 +34,33 @@ function displayZoom(heightPx: number): number {
 
 let editor: LabelEditor | undefined;
 let printerAvailable = false;
+let currentTool: Tool = "select";
+let currentSelection: Selection = null;
+
+// --- Context row: show only the active tool's settings -----------------
+
+const ctxSelect = element<HTMLDivElement>("ctx-select");
+const ctxText = element<HTMLDivElement>("ctx-text");
+const ctxDraw = element<HTMLDivElement>("ctx-draw");
+const fontFamilyInput = element<HTMLSelectElement>("font-family");
+const fontSizeInput = element<HTMLInputElement>("font-size");
+
+function updateContext(): void {
+  const showText = currentTool === "text" || currentSelection?.kind === "text";
+  const showDraw = currentTool === "draw" || currentTool === "erase";
+  ctxText.hidden = !showText;
+  ctxDraw.hidden = !showDraw;
+  ctxSelect.hidden = showText || showDraw;
+}
+
+function selectionChanged(selection: Selection): void {
+  currentSelection = selection;
+  if (selection?.kind === "text") {
+    fontFamilyInput.value = selection.fontFamily;
+    fontSizeInput.value = String(selection.fontSize);
+  }
+  updateContext();
+}
 
 function currentLengthPx(): number {
   return mmToPx(Number.parseFloat(lengthInput.value) || 60);
@@ -95,7 +122,9 @@ function setUpEditor(heightPx: number): void {
       schedulePreview();
     }, 150);
   });
+  newEditor.onSelectionChanged(selectionChanged);
   editor = newEditor;
+  currentSelection = null;
   setActiveTool("select");
   updateLengthReadout();
   schedulePreview();
@@ -178,10 +207,12 @@ const toolButtons: Record<Tool, HTMLButtonElement> = {
 
 function setActiveTool(tool: Tool): void {
   setView("edit"); // picking a tool while previewing returns to editing
+  currentTool = tool;
   editor?.setTool(tool);
   for (const [name, button] of Object.entries(toolButtons)) {
     button.classList.toggle("active", name === tool);
   }
+  updateContext();
 }
 
 for (const [name, button] of Object.entries(toolButtons) as [Tool, HTMLButtonElement][]) {
@@ -189,7 +220,9 @@ for (const [name, button] of Object.entries(toolButtons) as [Tool, HTMLButtonEle
 }
 
 element<HTMLInputElement>("brush-width").addEventListener("input", (event) => {
-  editor?.setBrushWidth(Number((event.target as HTMLInputElement).value));
+  const width = Number((event.target as HTMLInputElement).value);
+  editor?.setBrushWidth(width);
+  element<HTMLSpanElement>("brush-readout").textContent = `${width}px`;
 });
 
 element<HTMLSelectElement>("font-family").addEventListener("change", (event) => {
@@ -218,13 +251,20 @@ element<HTMLButtonElement>("clear-canvas").addEventListener("click", () => {
   editor?.clear();
 });
 
+const TOOL_KEYS: Record<string, Tool> = { v: "select", t: "text", d: "draw", e: "erase" };
+
 document.addEventListener("keydown", (event) => {
+  const target = event.target as HTMLElement;
+  if (target.tagName === "INPUT" || target.tagName === "SELECT" || target.tagName === "TEXTAREA") {
+    return; // typing in a field (including fabric's text-editing textarea)
+  }
   if (event.key === "Delete" || event.key === "Backspace") {
-    const target = event.target as HTMLElement;
-    if (target.tagName === "INPUT" || target.tagName === "SELECT" || target.tagName === "TEXTAREA") {
-      return;
-    }
     editor?.deleteSelection();
+    return;
+  }
+  const tool = TOOL_KEYS[event.key.toLowerCase()];
+  if (tool && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    setActiveTool(tool);
   }
 });
 

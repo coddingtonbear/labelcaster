@@ -9,44 +9,42 @@
   <body>
     <header>
       <h1>labelcaster</h1>
+      <div class="tool-group" role="group" aria-label="Tool">
+        <button id="tool-select" class="tool icon-btn active" type="button" title="Select and move objects (V)" aria-label="Select">➤</button>
+        <button id="tool-text" class="tool icon-btn tool-text-glyph" type="button" title="Add text (T)" aria-label="Text">T</button>
+        <button id="tool-draw" class="tool icon-btn" type="button" title="Draw freehand (D)" aria-label="Draw">✎</button>
+        <button id="tool-erase" class="tool icon-btn" type="button" title="Erase — draws in white (E)" aria-label="Erase">◻</button>
+      </div>
+      <label class="icon-btn button-like" title="Insert image" aria-label="Insert image">🖼<input id="image-file" type="file" accept="image/*" hidden /></label>
+      <span class="spacer"></span>
+      <button id="print-button" type="button" disabled>🖨 Print</button>
       <span id="printer-status" class="status status-unknown">checking printer…</span>
     </header>
 
-    <section class="toolbar" aria-label="Tools">
-      <div class="tool-group" role="group" aria-label="Tool">
-        <button id="tool-select" class="tool active" type="button">Select</button>
-        <button id="tool-text" class="tool" type="button">Text</button>
-        <button id="tool-draw" class="tool" type="button">Draw</button>
-        <button id="tool-erase" class="tool" type="button">Erase</button>
+    <section id="context-row" aria-label="Tool settings">
+      <div id="ctx-select" class="ctx">
+        <button id="delete-selection" type="button" title="Delete selected object (Del)">🗑 Delete</button>
+        <span class="ctx-hint">Click an object to select it; drag to move or resize.</span>
+        <span class="spacer"></span>
+        <button id="clear-canvas" class="danger" type="button" title="Remove everything from the label">Clear label</button>
       </div>
-      <label class="control">Brush
-        <input id="brush-width" type="range" min="1" max="16" value="4" />
-      </label>
-      <label class="control">Font
-        <select id="font-family">
-          <option value="system-ui">System</option>
-        </select>
-      </label>
-      <label class="control">Size
-        <input id="font-size" type="number" min="6" max="128" value="40" />
-      </label>
-      <label class="control button-like">Image
-        <input id="image-file" type="file" accept="image/*" hidden />
-      </label>
-      <button id="delete-selection" type="button">Delete</button>
-      <button id="clear-canvas" type="button">Clear</button>
-    </section>
-
-    <section class="label-controls">
-      <label class="control" id="tape-picker-wrap" hidden>Tape
-        <select id="tape-picker"></select>
-      </label>
-      <span id="tape-info"></span>
-      <label class="control">Length (mm)
-        <input id="label-length" type="number" min="1" max="1000" step="any" value="60" />
-      </label>
-      <button id="fit-length" type="button" title="Trim the label so the right margin matches the left">Fit</button>
-      <span id="length-readout"></span>
+      <div id="ctx-text" class="ctx" hidden>
+        <label class="control">Font
+          <select id="font-family">
+            <option value="system-ui">System</option>
+          </select>
+        </label>
+        <label class="control">Size
+          <input id="font-size" type="number" min="6" max="128" value="40" />
+        </label>
+        <span class="ctx-hint">Click the label to place text; double-click existing text to edit it.</span>
+      </div>
+      <div id="ctx-draw" class="ctx" hidden>
+        <label class="control">Brush
+          <input id="brush-width" type="range" min="1" max="16" value="4" />
+        </label>
+        <span id="brush-readout" class="ctx-hint">4px</span>
+      </div>
     </section>
 
     <main>
@@ -60,10 +58,21 @@
       <div class="canvas-scroll" id="preview-view" hidden>
         <canvas id="preview"></canvas>
       </div>
+      <section class="label-strip" aria-label="Label size">
+        <label class="control">Length (mm)
+          <input id="label-length" type="number" min="1" max="1000" step="any" value="60" />
+        </label>
+        <button id="fit-length" type="button" title="Trim the label so the right margin matches the left">⇤⇥ Fit</button>
+        <span id="length-readout"></span>
+        <span class="spacer"></span>
+        <label class="control" id="tape-picker-wrap" hidden>Tape
+          <select id="tape-picker"></select>
+        </label>
+        <span id="tape-info"></span>
+      </section>
     </main>
 
     <footer>
-      <button id="print-button" type="button" disabled>Print</button>
       <span id="print-result"></span>
     </footer>
 

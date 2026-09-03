@@ -9,6 +9,12 @@ export interface LabelMask {
   height: number;
 }
 
+/** What is currently selected, for context-sensitive UI. */
+export type Selection =
+  | { kind: "text"; fontFamily: string; fontSize: number }
+  | { kind: "other" }
+  | null;
+
 export interface EditorOptions {
   canvasElement: HTMLCanvasElement;
   /** Label size in true printer pixels. */
@@ -74,6 +80,22 @@ export class LabelEditor {
 
   onRendered(callback: () => void): void {
     this.canvas.on("after:render", callback);
+  }
+
+  onSelectionChanged(callback: (selection: Selection) => void): void {
+    const emit = (): void => {
+      const active = this.canvas.getActiveObject();
+      if (!active) {
+        callback(null);
+      } else if (active instanceof IText) {
+        callback({ kind: "text", fontFamily: active.fontFamily, fontSize: active.fontSize });
+      } else {
+        callback({ kind: "other" });
+      }
+    };
+    this.canvas.on("selection:created", emit);
+    this.canvas.on("selection:updated", emit);
+    this.canvas.on("selection:cleared", () => callback(null));
   }
 
   setTool(tool: Tool): void {
