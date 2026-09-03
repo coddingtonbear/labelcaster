@@ -10,15 +10,24 @@ any device on your network — phone included.
 
 ## Features
 
-- **Paint-style canvas editor** — select/move/resize, inline text editing,
-  freehand drawing, erasing, and image import, with keyboard shortcuts
-  (`V`/`T`/`D`/`E`, `Del`). The canvas is sized to the printer's actual
-  loaded tape, reported live over USB.
-- **Bundled open-source fonts** — Inter, Lora, JetBrains Mono, Oswald,
-  Archivo Black, Caveat, and Comic Neue ship with the app (SIL OFL 1.1), so
-  every device renders the same label. Drop any `.ttf`/`.otf`/`.woff`/
-  `.woff2` into `fonts/` and it appears in the picker — no rebuild
-  (filename = family name; see [fonts/README.md](fonts/README.md)).
+- **Paint-style canvas editor** — select/move/resize, inline text editing
+  with bold/italic/underline, freehand drawing, erasing, and image import,
+  with keyboard shortcuts (`V`/`T`/`D`/`E`, `Del`). The canvas is sized to
+  the printer's actual loaded tape, reported live over USB.
+- **Bundled open-source fonts** — nine families ship with the app (Inter,
+  Lora, JetBrains Mono, Oswald, Archivo Black, Caveat, Comic Neue, plus the
+  Gorton engraving-style Routed Gothic and Open Gorton), so every device
+  renders the same label; variable fonts get *real* bold faces rather than
+  browser synthesis. Drop any `.ttf`/`.otf`/`.woff`/`.woff2` into `fonts/`
+  and it appears in the picker — no rebuild (filename = family name; see
+  [fonts/README.md](fonts/README.md)).
+- **Save and load designs** — the Save button downloads everything needed to
+  reproduce a label (canvas, fonts and styles, label size) as a named
+  `.labelcaster.json` file; open one later to keep iterating. No server
+  storage — the files are yours.
+- **Multiple copies** — the Print button's copies picker prints N clean
+  auto-cut labels, or opt into one continuous strip with printed cut marks
+  between copies to waste less tape.
 - **Honest 1-bit preview** — the Preview tab shows exactly the thresholded
   black/white raster the printer will receive, not the anti-aliased canvas.
 

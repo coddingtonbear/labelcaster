@@ -249,6 +249,8 @@ export class LabelEditor {
     heart.scaleToHeight(h * 0.55);
     heart.set({ left: 10 + (text.width ?? 0) + h * 0.25, top: h / 2 });
     this.canvas.add(heart);
+    // Select the text so screenshots show the text context row (font, B/I/U).
+    this.canvas.setActiveObject(text);
     this.canvas.requestRenderAll();
   }
 
