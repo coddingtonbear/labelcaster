@@ -83,6 +83,11 @@ h1 {
   font-weight: bold;
 }
 
+.icon-btn svg {
+  display: block;
+  flex: none;
+}
+
 .style-btn {
   width: 2.1rem;
   font-family: Georgia, serif;
