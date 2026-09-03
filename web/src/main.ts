@@ -1,5 +1,10 @@
 import { ApiError, fetchFonts, fetchStatus, printPng, type PrinterStatus } from "./api.js";
-import { defaultFilename, parseDesignFile, serializeDesignFile } from "./designfile.js";
+import {
+  designNameFromFilename,
+  filenameForDesign,
+  parseDesignFile,
+  serializeDesignFile,
+} from "./designfile.js";
 import { LabelEditor, type Selection, type Tool } from "./editor.js";
 import { fittedWidth } from "./fit.js";
 import { loadFonts } from "./fonts.js";
@@ -379,6 +384,8 @@ function setFooterStatus(message: string, kind: "" | "ok" | "error" = ""): void 
   printResult.className = kind;
 }
 
+const designNameInput = element<HTMLInputElement>("design-name");
+
 element<HTMLButtonElement>("design-download").addEventListener("click", () => {
   if (!editor) return;
   const text = serializeDesignFile(editor.serializeDesign());
@@ -386,7 +393,7 @@ element<HTMLButtonElement>("design-download").addEventListener("click", () => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = defaultFilename();
+  link.download = filenameForDesign(designNameInput.value);
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
@@ -405,6 +412,7 @@ designFileInput.addEventListener("change", () => {
       editor.setLabelWidth(design.widthPx);
       await editor.loadDesign(design.canvas);
       lengthInput.value = pxToMm(design.widthPx).toFixed(1);
+      designNameInput.value = designNameFromFilename(file.name);
       syncZoom();
       updateLengthReadout();
       schedulePreview();

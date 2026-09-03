@@ -185,6 +185,7 @@ button:disabled {
 }
 
 .control select,
+.control input[type="text"],
 .control input[type="number"] {
   font: inherit;
   padding: 0.25rem 0.4rem;
@@ -194,6 +195,7 @@ button:disabled {
 }
 
 .control input[type="number"] { width: 4.5rem; }
+.control input[type="text"] { width: 11rem; }
 
 .canvas-scroll {
   overflow-x: auto;

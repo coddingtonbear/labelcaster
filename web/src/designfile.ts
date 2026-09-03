@@ -79,3 +79,25 @@ export function defaultFilename(now: Date = new Date()): string {
   )}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   return `label-${stamp}${DESIGN_FILE_EXTENSION}`;
 }
+
+/**
+ * Filename for a download: the user's design name (made filesystem-safe) when
+ * one is set, otherwise the timestamp default.
+ */
+export function filenameForDesign(name: string | null | undefined, now?: Date): string {
+  const cleaned = (name ?? "")
+    .replace(/[/\\:*?"<>|]/g, " ") // characters no filesystem wants
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80)
+    .trim();
+  if (cleaned === "" || cleaned === ".") {
+    return defaultFilename(now);
+  }
+  return `${cleaned}${DESIGN_FILE_EXTENSION}`;
+}
+
+/** "Pantry jar.labelcaster.json" -> "Pantry jar" (for prefilling the name field). */
+export function designNameFromFilename(filename: string): string {
+  return filename.replace(/\.labelcaster\.json$/i, "").replace(/\.json$/i, "");
+}
