@@ -156,8 +156,7 @@ h1 {
   overflow: hidden;
 }
 
-button,
-.button-like {
+button {
   font: inherit;
   font-size: 0.9rem;
   padding: 0.35rem 0.8rem;
@@ -167,8 +166,7 @@ button,
   cursor: pointer;
 }
 
-.tool-group > button,
-.tool-group > .button-like {
+.tool-group > button {
   border: none;
   border-radius: 0;
   border-right: 1px solid var(--border);
@@ -355,7 +353,7 @@ footer {
   }
 
   .tool-group,
-  header .button-like,
+  #open-design-button,
   .save-group,
   .print-group {
     order: 1;

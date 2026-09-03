@@ -322,6 +322,7 @@ element<HTMLInputElement>("font-size").addEventListener("change", (event) => {
 });
 
 const imageInput = element<HTMLInputElement>("image-file");
+element<HTMLButtonElement>("image-button").addEventListener("click", () => imageInput.click());
 imageInput.addEventListener("change", () => {
   const file = imageInput.files?.[0];
   if (file && editor) {
@@ -329,7 +330,6 @@ imageInput.addEventListener("change", () => {
     imageInput.value = "";
   }
 });
-// The label wrapping the hidden input opens the file picker natively.
 
 element<HTMLButtonElement>("delete-selection").addEventListener("click", () => {
   editor?.deleteSelection();
@@ -425,6 +425,9 @@ designNameInput.addEventListener("keydown", (event) => {
 savePopover.addEventListener("click", (event) => event.stopPropagation());
 
 const designFileInput = element<HTMLInputElement>("design-file");
+element<HTMLButtonElement>("open-design-button").addEventListener("click", () =>
+  designFileInput.click(),
+);
 designFileInput.addEventListener("change", () => {
   void (async () => {
     const file = designFileInput.files?.[0];
