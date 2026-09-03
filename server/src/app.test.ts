@@ -79,6 +79,63 @@ describe("GET /api/fonts", () => {
   });
 });
 
+describe("design routes", () => {
+  const cleanups: string[] = [];
+
+  afterAll(async () => {
+    for (const dir of cleanups) await rm(dir, { recursive: true, force: true });
+  });
+
+  async function designApp() {
+    const dir = await mkdtemp(join(tmpdir(), "labelcaster-appdesigns-"));
+    cleanups.push(dir);
+    return buildApp({
+      client: new PtouchClient({ binary: "ptouch-print", exec: okExec }),
+      designsDir: dir,
+    });
+  }
+
+  it("saves, lists, fetches, and deletes a design", async () => {
+    const app = await designApp();
+    const body = { widthPx: 425, heightPx: 76, canvas: { objects: [] } };
+    const put = await app.inject({ method: "PUT", url: "/api/designs/Pantry%20jar", payload: body });
+    expect(put.statusCode).toBe(200);
+
+    const list = await app.inject({ method: "GET", url: "/api/designs" });
+    expect(list.json()).toMatchObject([{ name: "Pantry jar", widthPx: 425 }]);
+
+    const got = await app.inject({ method: "GET", url: "/api/designs/Pantry%20jar" });
+    expect(got.statusCode).toBe(200);
+    expect(got.json().canvas).toEqual({ objects: [] });
+
+    const del = await app.inject({ method: "DELETE", url: "/api/designs/Pantry%20jar" });
+    expect(del.statusCode).toBe(200);
+    expect((await app.inject({ method: "GET", url: "/api/designs/Pantry%20jar" })).statusCode).toBe(404);
+  });
+
+  it("rejects invalid names and malformed bodies", async () => {
+    const app = await designApp();
+    const traversal = await app.inject({
+      method: "PUT",
+      url: "/api/designs/..%2Fescape",
+      payload: { widthPx: 1, heightPx: 1, canvas: {} },
+    });
+    expect([400, 404]).toContain(traversal.statusCode);
+
+    const bad = await app.inject({
+      method: "PUT",
+      url: "/api/designs/ok",
+      payload: { widthPx: "wide", canvas: {} },
+    });
+    expect(bad.statusCode).toBe(400);
+  });
+
+  it("503s when no designs directory is configured", async () => {
+    const res = await appWith(okExec).inject({ method: "GET", url: "/api/designs" });
+    expect(res.statusCode).toBe(503);
+  });
+});
+
 describe("POST /api/print", () => {
   it("accepts a PNG body and prints it", async () => {
     const res = await appWith(okExec).inject({

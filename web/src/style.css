@@ -248,6 +248,84 @@ footer {
   color: var(--muted);
 }
 
+/* --- Designs dialog ---------------------------------------------------- */
+
+#designs-dialog {
+  min-width: min(26rem, 90vw);
+  max-height: 80vh;
+  padding: 1rem 1.25rem;
+  background: var(--panel);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+#designs-dialog::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+
+#designs-dialog h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+}
+
+.design-save-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.design-save-row input {
+  flex: 1;
+  font: inherit;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+#design-list {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  max-height: 45vh;
+  overflow-y: auto;
+}
+
+#design-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+#design-list li:last-child {
+  border-bottom: none;
+}
+
+.design-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.design-title .design-meta {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.design-dialog-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+#design-dialog-status {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 /* --- Small screens ---------------------------------------------------- */
 
 @media (max-width: 700px) {

@@ -152,19 +152,40 @@ export class LabelEditor {
   }
 
   async addImage(file: File): Promise<void> {
-    const url = URL.createObjectURL(file);
-    try {
-      const image = await FabricImage.fromURL(url);
-      const maxHeight = this.heightPx * 0.95;
-      if (image.height > maxHeight) {
-        image.scaleToHeight(maxHeight);
-      }
-      image.set({ left: 4, top: this.heightPx / 2, originY: "center" });
-      this.canvas.add(image);
-      this.canvas.setActiveObject(image);
-    } finally {
-      URL.revokeObjectURL(url);
+    // A data URL (not an object URL) so the image survives design
+    // serialization: fabric stores the src in toJSON().
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error ?? new Error("could not read image file"));
+      reader.readAsDataURL(file);
+    });
+    const image = await FabricImage.fromURL(dataUrl);
+    const maxHeight = this.heightPx * 0.95;
+    if (image.height > maxHeight) {
+      image.scaleToHeight(maxHeight);
     }
+    image.set({ left: 4, top: this.heightPx / 2, originY: "center" });
+    this.canvas.add(image);
+    this.canvas.setActiveObject(image);
+  }
+
+  /** Everything needed to reproduce the design: sizes + fabric canvas JSON. */
+  serializeDesign(): { widthPx: number; heightPx: number; canvas: unknown } {
+    return {
+      widthPx: this.widthPx,
+      heightPx: this.heightPx,
+      canvas: this.canvas.toJSON() as unknown,
+    };
+  }
+
+  /** Replace the canvas contents with a previously serialized design. */
+  async loadDesign(canvasJson: unknown): Promise<void> {
+    await this.canvas.loadFromJSON(canvasJson as Record<string, unknown>);
+    this.canvas.backgroundColor = "white";
+    this.canvas.setZoom(this.zoom); // loadFromJSON resets the viewport
+    this.canvas.discardActiveObject();
+    this.canvas.requestRenderAll();
   }
 
   /** Populate sample content (?demo) — for screenshots and printerless demos. */

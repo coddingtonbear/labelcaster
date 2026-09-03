@@ -1,4 +1,15 @@
-import { ApiError, fetchFonts, fetchStatus, printPng, type PrinterStatus } from "./api.js";
+import {
+  ApiError,
+  deleteDesign,
+  fetchFonts,
+  fetchStatus,
+  getDesign,
+  listDesigns,
+  printPng,
+  saveDesign,
+  type DesignMeta,
+  type PrinterStatus,
+} from "./api.js";
 import { LabelEditor, type Selection, type Tool } from "./editor.js";
 import { fittedWidth } from "./fit.js";
 import { loadFonts } from "./fonts.js";
@@ -348,6 +359,120 @@ element<HTMLButtonElement>("fit-length").addEventListener("click", () => {
   updateLengthReadout();
   schedulePreview();
 });
+
+// --- Designs: save/load via the server ----------------------------------
+
+const designsDialog = element<HTMLDialogElement>("designs-dialog");
+const designList = element<HTMLUListElement>("design-list");
+const designNameInput = element<HTMLInputElement>("design-name");
+const designStatus = element<HTMLSpanElement>("design-dialog-status");
+const DESIGN_NAME = /^[A-Za-z0-9][A-Za-z0-9 _()-]{0,63}$/;
+
+function setDesignStatus(message: string): void {
+  designStatus.textContent = message;
+}
+
+function designRow(meta: DesignMeta): HTMLLIElement {
+  const li = document.createElement("li");
+
+  const title = document.createElement("span");
+  title.className = "design-title";
+  title.textContent = meta.name;
+  const detail = document.createElement("span");
+  detail.className = "design-meta";
+  const when = new Date(meta.updatedAt);
+  detail.textContent = `${formatMm(pxToMm(meta.widthPx))} × ${meta.heightPx}px — saved ${
+    Number.isNaN(when.valueOf()) ? meta.updatedAt : when.toLocaleString()
+  }`;
+  title.appendChild(detail);
+
+  const load = document.createElement("button");
+  load.type = "button";
+  load.textContent = "Load";
+  load.addEventListener("click", () => void loadDesignByName(meta.name));
+
+  const del = document.createElement("button");
+  del.type = "button";
+  del.textContent = "Delete";
+  del.className = "danger";
+  del.addEventListener("click", () => {
+    void (async () => {
+      if (!window.confirm(`Delete design "${meta.name}"?`)) return;
+      try {
+        await deleteDesign(meta.name);
+        await refreshDesignList();
+        setDesignStatus(`deleted "${meta.name}"`);
+      } catch (error) {
+        setDesignStatus(error instanceof Error ? error.message : String(error));
+      }
+    })();
+  });
+
+  li.append(title, load, del);
+  return li;
+}
+
+async function refreshDesignList(): Promise<void> {
+  const designs = await listDesigns();
+  designList.innerHTML = "";
+  if (designs.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "No saved designs yet.";
+    designList.appendChild(li);
+    return;
+  }
+  for (const meta of designs) {
+    designList.appendChild(designRow(meta));
+  }
+}
+
+async function loadDesignByName(name: string): Promise<void> {
+  if (!editor) return;
+  try {
+    const design = await getDesign(name);
+    if (editor.labelHeightPx !== design.heightPx) {
+      editor.setLabelHeight(design.heightPx);
+    }
+    editor.setLabelWidth(design.widthPx);
+    await editor.loadDesign(design.canvas);
+    lengthInput.value = pxToMm(design.widthPx).toFixed(1);
+    designNameInput.value = name;
+    syncZoom();
+    updateLengthReadout();
+    schedulePreview();
+    designsDialog.close();
+  } catch (error) {
+    setDesignStatus(error instanceof Error ? error.message : String(error));
+  }
+}
+
+element<HTMLButtonElement>("designs-button").addEventListener("click", () => {
+  setDesignStatus("");
+  designsDialog.showModal();
+  void refreshDesignList().catch((error: unknown) => {
+    setDesignStatus(error instanceof Error ? error.message : String(error));
+  });
+});
+
+element<HTMLButtonElement>("design-save").addEventListener("click", () => {
+  void (async () => {
+    if (!editor) return;
+    const name = designNameInput.value.trim();
+    if (!DESIGN_NAME.test(name)) {
+      setDesignStatus("name: letters, digits, spaces, _()- (max 64, no leading symbol)");
+      return;
+    }
+    try {
+      await saveDesign(name, editor.serializeDesign());
+      await refreshDesignList();
+      setDesignStatus(`saved "${name}"`);
+    } catch (error) {
+      setDesignStatus(error instanceof Error ? error.message : String(error));
+    }
+  })();
+});
+
+element<HTMLButtonElement>("designs-close").addEventListener("click", () => designsDialog.close());
 
 // --- Print -------------------------------------------------------------
 

@@ -60,6 +60,54 @@ export async function fetchStatus(): Promise<PrinterStatus> {
   return (await res.json()) as PrinterStatus;
 }
 
+export interface DesignMeta {
+  name: string;
+  widthPx: number;
+  heightPx: number;
+  updatedAt: string;
+}
+
+export interface DesignInput {
+  widthPx: number;
+  heightPx: number;
+  canvas: unknown;
+}
+
+export interface Design extends DesignMeta {
+  canvas: unknown;
+}
+
+async function checkOk(res: Response): Promise<Response> {
+  if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
+  return res;
+}
+
+export async function listDesigns(): Promise<DesignMeta[]> {
+  const res = await checkOk(await fetch("/api/designs"));
+  return (await res.json()) as DesignMeta[];
+}
+
+export async function getDesign(name: string): Promise<Design> {
+  const res = await checkOk(await fetch(`/api/designs/${encodeURIComponent(name)}`));
+  return (await res.json()) as Design;
+}
+
+export async function saveDesign(name: string, input: DesignInput): Promise<void> {
+  await checkOk(
+    await fetch(`/api/designs/${encodeURIComponent(name)}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  );
+}
+
+export async function deleteDesign(name: string): Promise<void> {
+  await checkOk(
+    await fetch(`/api/designs/${encodeURIComponent(name)}`, { method: "DELETE" }),
+  );
+}
+
 export async function printPng(png: Uint8Array): Promise<string> {
   const res = await fetch("/api/print", {
     method: "POST",
