@@ -124,6 +124,13 @@ export const execPtouch: Exec = (binary, args) =>
 export interface PtouchClientOptions {
   /** Path to the ptouch-print binary. */
   binary: string;
+  /**
+   * Pass --precut so the printer cuts off the blank head-to-cutter leader as
+   * scrap instead of leaving ~25mm of empty tape attached to the label start.
+   * A no-op on models without cutter support, but unknown to ptouch-print
+   * builds older than ~1.5 — disable for those. Default true.
+   */
+  precut?: boolean;
   exec?: Exec;
 }
 
@@ -133,10 +140,12 @@ export interface PtouchClientOptions {
  */
 export class PtouchClient {
   private readonly binary: string;
+  private readonly precut: boolean;
   private readonly exec: Exec;
 
   constructor(options: PtouchClientOptions) {
     this.binary = options.binary;
+    this.precut = options.precut ?? true;
     this.exec = options.exec ?? execPtouch;
   }
 
@@ -155,7 +164,8 @@ export class PtouchClient {
     const file = join(dir, "label.png");
     try {
       await writeFile(file, png);
-      const result = await this.exec(this.binary, ["--image", file]);
+      const args = this.precut ? ["--precut", "--image", file] : ["--image", file];
+      const result = await this.exec(this.binary, args);
       if (result.code !== 0) {
         return {
           ok: false,

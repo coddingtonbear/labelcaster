@@ -10,7 +10,9 @@ const port = Number.parseInt(process.env.PORT ?? "8180", 10);
 const webRoot = process.env.LABELCASTER_WEB_ROOT ?? resolve(here, "../../web/dist");
 const fontsDir = process.env.LABELCASTER_FONTS_DIR ?? resolve(here, "../../fonts");
 
-const app = buildApp({ client: new PtouchClient({ binary }), webRoot, fontsDir });
+const precut = process.env.LABELCASTER_PRECUT !== "0";
+
+const app = buildApp({ client: new PtouchClient({ binary, precut }), webRoot, fontsDir });
 
 app.listen({ port, host: "0.0.0.0" }).then(
   (address) => {

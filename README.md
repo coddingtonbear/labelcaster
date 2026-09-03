@@ -48,7 +48,11 @@ PTOUCH_PRINT_BIN=../ptouch-print/ptouch-print node server/dist/index.js
 ```
 
 Environment: `PTOUCH_PRINT_BIN` (default `ptouch-print` on PATH), `PORT`
-(default 8180), `LABELCASTER_FONTS_DIR` (default the repo's `fonts/`). The binary needs libusb access to the printer — usually udev
+(default 8180), `LABELCASTER_FONTS_DIR` (default the repo's `fonts/`),
+`LABELCASTER_PRECUT=0` to stop passing `--precut` (needed for ptouch-print
+builds older than ~1.5, which don't know the flag; on newer builds precut
+makes the printer cut off the blank head-to-cutter leader instead of leaving
+~25mm of empty tape at the start of every label). The binary needs libusb access to the printer — usually udev
 rules or root (it detaches the `usblp` kernel driver itself).
 
 ## Background

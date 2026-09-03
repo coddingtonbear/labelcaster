@@ -85,25 +85,34 @@ describe("PtouchClient", () => {
     await expect(client.status()).rejects.toThrow(/exit 5.*ptouch_open/s);
   });
 
-  it("prints via a temp file and reports success", async () => {
-    let printedFile: string | undefined;
+  it("prints via a temp file with --precut and reports success", async () => {
+    let printArgs: string[] | undefined;
     const exec: Exec = (_binary, args) => {
-      if (args[0] === "--image") {
-        printedFile = args[1];
-        return Promise.resolve({ code: 0, stdout: "", stderr: "" });
-      }
-      throw new Error("unexpected");
+      printArgs = args;
+      return Promise.resolve({ code: 0, stdout: "", stderr: "" });
     };
     const client = new PtouchClient({ binary: "ptouch-print", exec });
     await expect(client.print(PNG)).resolves.toEqual({ ok: true, output: "" });
-    expect(printedFile).toMatch(/labelcaster-.*label\.png$/);
+    expect(printArgs?.slice(0, 2)).toEqual(["--precut", "--image"]);
+    expect(printArgs?.[2]).toMatch(/labelcaster-.*label\.png$/);
+  });
+
+  it("omits --precut when disabled (older ptouch-print builds)", async () => {
+    let printArgs: string[] | undefined;
+    const exec: Exec = (_binary, args) => {
+      printArgs = args;
+      return Promise.resolve({ code: 0, stdout: "", stderr: "" });
+    };
+    const client = new PtouchClient({ binary: "ptouch-print", precut: false, exec });
+    await client.print(PNG);
+    expect(printArgs?.[0]).toBe("--image");
   });
 
   it("treats 'image is too large' stdout as a failure even on exit 0", async () => {
     const client = new PtouchClient({
       binary: "ptouch-print",
       exec: fakeExec({
-        "--image": {
+        "--precut": {
           code: 0,
           stdout: "image is too large (900px x 100px)\nmaximum printing width for this tape is 76px\n",
           stderr: "",
