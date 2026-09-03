@@ -13,8 +13,13 @@
 }
 
 body {
-  margin: 0;
+  max-width: 64rem; /* ~1024px; long labels scroll inside the canvas strip */
+  margin: 0 auto;
   padding: 1rem 1.5rem;
+  background: var(--bg);
+}
+
+html {
   background: var(--bg);
 }
 
