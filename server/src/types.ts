@@ -22,3 +22,10 @@ export interface ColorInfo {
 export type PrintResult =
   | { ok: true; output: string }
   | { ok: false; message: string };
+
+/**
+ * How multiple copies come out: "separate" prints one job per copy (each a
+ * clean auto-cut label; leader scrap per copy); "cutmark" prints one strip
+ * with printed cut marks between copies (leader scrap once; scissors).
+ */
+export type PrintMode = "separate" | "cutmark";

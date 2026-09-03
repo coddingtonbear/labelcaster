@@ -112,6 +112,35 @@ describe("PtouchClient", () => {
     }
   });
 
+  it("cutmark mode composes one job with marks between copies", async () => {
+    const calls: string[][] = [];
+    const exec: Exec = (_binary, args) => {
+      calls.push(args);
+      return Promise.resolve({ code: 0, stdout: "", stderr: "" });
+    };
+    const client = new PtouchClient({ binary: "ptouch-print", exec });
+    await expect(client.print(PNG, 3, "cutmark")).resolves.toEqual({ ok: true, output: "" });
+    expect(calls).toHaveLength(1);
+    const args = calls[0] ?? [];
+    expect(args[0]).toBe("--precut");
+    // --image f --cutmark --image f --cutmark --image f: marks between, not after
+    expect(args.filter((a) => a === "--image")).toHaveLength(3);
+    expect(args.filter((a) => a === "--cutmark")).toHaveLength(2);
+    expect(args[args.length - 2]).toBe("--image");
+  });
+
+  it("cutmark mode with one copy is just a normal single print", async () => {
+    const calls: string[][] = [];
+    const exec: Exec = (_binary, args) => {
+      calls.push(args);
+      return Promise.resolve({ code: 0, stdout: "", stderr: "" });
+    };
+    const client = new PtouchClient({ binary: "ptouch-print", exec });
+    await client.print(PNG, 1, "cutmark");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.join(" ")).not.toContain("--cutmark");
+  });
+
   it("stops on a mid-batch failure and names the failed copy", async () => {
     let n = 0;
     const exec: Exec = () => {

@@ -60,8 +60,20 @@ export async function fetchStatus(): Promise<PrinterStatus> {
   return (await res.json()) as PrinterStatus;
 }
 
-export async function printPng(png: Uint8Array, copies = 1): Promise<string> {
-  const url = copies > 1 ? `/api/print?copies=${copies}` : "/api/print";
+export type PrintMode = "separate" | "cutmark";
+
+export async function printPng(
+  png: Uint8Array,
+  copies = 1,
+  mode: PrintMode = "separate",
+): Promise<string> {
+  const params = new URLSearchParams();
+  if (copies > 1) {
+    params.set("copies", String(copies));
+    if (mode !== "separate") params.set("mode", mode);
+  }
+  const query = params.toString();
+  const url = query ? `/api/print?${query}` : "/api/print";
   const res = await fetch(url, {
     method: "POST",
     headers: { "content-type": "image/png" },

@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { ColorInfo, PrinterStatus, PrintResult } from "./types.js";
+import type { ColorInfo, PrinterStatus, PrintMode, PrintResult } from "./types.js";
 
 /**
  * Color names for the tape/text color codes reported in the printer status
@@ -169,8 +169,8 @@ export class PtouchClient {
     return this.enqueue(() => this.statusNow());
   }
 
-  print(png: Buffer, copies = 1): Promise<PrintResult> {
-    return this.enqueue(() => this.printNow(png, copies));
+  print(png: Buffer, copies = 1, mode: PrintMode = "separate"): Promise<PrintResult> {
+    return this.enqueue(() => this.printNow(png, copies, mode));
   }
 
   private async statusNow(): Promise<PrinterStatus> {
@@ -184,40 +184,55 @@ export class PtouchClient {
   }
 
   /**
-   * Copies are printed as separate single-label jobs rather than via
-   * --copies: ptouch-print chains pages for --copies (no feed/cut between),
-   * which on auto-cut models leaves a long blank tail on every label. A
-   * fresh job per copy reproduces the known-good single print exactly, at
-   * the cost of the per-print leader scrap.
+   * Copies are printed as separate single-label jobs ("separate", default) —
+   * never via --copies, which chains pages without feed/cut between them and
+   * on auto-cut models left a long blank tail on every label. "cutmark" mode
+   * instead composes ONE job whose image is N copies separated by printed
+   * cut marks (--image f --cutmark --image f …): the whole strip goes
+   * through the known-good single-print path (leader precut, one clean final
+   * cut), pays the leader scrap once, and is scissored apart at the marks.
    */
-  private async printNow(png: Buffer, copies: number): Promise<PrintResult> {
+  private async printNow(png: Buffer, copies: number, mode: PrintMode): Promise<PrintResult> {
     const dir = await mkdtemp(join(tmpdir(), "labelcaster-"));
     const file = join(dir, "label.png");
     try {
       await writeFile(file, png);
-      const args = [...(this.precut ? ["--precut"] : []), "--image", file];
-      let lastOutput = "";
+      const precut = this.precut ? ["--precut"] : [];
+      if (mode === "cutmark" && copies > 1) {
+        const withMarks: string[] = [];
+        for (let i = 0; i < copies; i++) {
+          if (i > 0) withMarks.push("--cutmark");
+          withMarks.push("--image", file);
+        }
+        return this.runPrintJob([...precut, ...withMarks], "");
+      }
+      let lastResult: PrintResult = { ok: true, output: "" };
       for (let copy = 1; copy <= copies; copy++) {
         const which = copies > 1 ? ` (copy ${copy} of ${copies})` : "";
-        const result = await this.exec(this.binary, args);
-        if (result.code !== 0) {
-          return {
-            ok: false,
-            message: `ptouch-print exited ${result.code}${which}: ${(result.stderr || result.stdout).trim()}`,
-          };
-        }
-        // ptouch-print reports some failures on stdout with a zero exit code
-        // (e.g. "image is too large"), so treat any "failed"/"too large"
-        // text as an error even on success exit.
-        const combined = `${result.stdout}\n${result.stderr}`;
-        if (/failed|too large|nothing to print/i.test(combined)) {
-          return { ok: false, message: `${combined.trim()}${which}` };
-        }
-        lastOutput = result.stdout.trim();
+        lastResult = await this.runPrintJob([...precut, "--image", file], which);
+        if (!lastResult.ok) return lastResult;
       }
-      return { ok: true, output: lastOutput };
+      return lastResult;
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  }
+
+  private async runPrintJob(args: string[], which: string): Promise<PrintResult> {
+    const result = await this.exec(this.binary, args);
+    if (result.code !== 0) {
+      return {
+        ok: false,
+        message: `ptouch-print exited ${result.code}${which}: ${(result.stderr || result.stdout).trim()}`,
+      };
+    }
+    // ptouch-print reports some failures on stdout with a zero exit code
+    // (e.g. "image is too large"), so treat any "failed"/"too large" text
+    // as an error even on success exit.
+    const combined = `${result.stdout}\n${result.stderr}`;
+    if (/failed|too large|nothing to print/i.test(combined)) {
+      return { ok: false, message: `${combined.trim()}${which}` };
+    }
+    return { ok: true, output: result.stdout.trim() };
   }
 }

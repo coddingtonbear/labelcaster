@@ -33,7 +33,7 @@ export function buildApp(options: AppOptions): FastifyInstance {
     }
   });
 
-  app.post<{ Querystring: { copies?: string } }>("/api/print", async (req, reply) => {
+  app.post<{ Querystring: { copies?: string; mode?: string } }>("/api/print", async (req, reply) => {
     const body = req.body;
     if (!Buffer.isBuffer(body) || !body.subarray(0, 8).equals(PNG_MAGIC)) {
       return reply.status(400).send({ message: "body must be a PNG (content-type image/png)" });
@@ -42,7 +42,11 @@ export function buildApp(options: AppOptions): FastifyInstance {
     if (!Number.isInteger(copies) || copies < 1 || copies > 100) {
       return reply.status(400).send({ message: "copies must be an integer from 1 to 100" });
     }
-    const result = await options.client.print(body, copies);
+    const mode = req.query.mode ?? "separate";
+    if (mode !== "separate" && mode !== "cutmark") {
+      return reply.status(400).send({ message: "mode must be 'separate' or 'cutmark'" });
+    }
+    const result = await options.client.print(body, copies, mode);
     if (!result.ok) {
       return reply.status(502).send({ message: result.message });
     }

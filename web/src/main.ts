@@ -398,15 +398,21 @@ designFileInput.addEventListener("change", () => {
 const copiesPopover = element<HTMLDivElement>("copies-popover");
 const copiesToggle = element<HTMLButtonElement>("print-copies-toggle");
 const copiesInput = element<HTMLInputElement>("copies-input");
+const cutmarkCheckbox = element<HTMLInputElement>("cutmark-mode");
 
 function currentCopies(): number {
   const n = Number.parseInt(copiesInput.value, 10);
   return Number.isInteger(n) && n >= 1 && n <= 100 ? n : 1;
 }
 
+function currentMode(): "separate" | "cutmark" {
+  return cutmarkCheckbox.checked ? "cutmark" : "separate";
+}
+
 function updatePrintLabel(): void {
   const copies = currentCopies();
-  printButton.textContent = copies > 1 ? `🖨 Print ×${copies}` : "🖨 Print";
+  const strip = copies > 1 && currentMode() === "cutmark" ? " strip" : "";
+  printButton.textContent = copies > 1 ? `🖨 Print ×${copies}${strip}` : "🖨 Print";
 }
 
 copiesToggle.addEventListener("click", (event) => {
@@ -416,6 +422,7 @@ copiesToggle.addEventListener("click", (event) => {
 });
 
 copiesInput.addEventListener("input", updatePrintLabel);
+cutmarkCheckbox.addEventListener("change", updatePrintLabel);
 copiesPopover.addEventListener("click", (event) => event.stopPropagation());
 document.addEventListener("click", () => {
   copiesPopover.hidden = true;
@@ -425,6 +432,7 @@ printButton.addEventListener("click", () => {
   void (async () => {
     if (!editor || !printerAvailable || printing) return;
     const copies = currentCopies();
+    const mode = currentMode();
     printing = true;
     printButton.disabled = true;
     copiesPopover.hidden = true;
@@ -433,10 +441,12 @@ printButton.addEventListener("click", () => {
     try {
       const { mask, width, height } = editor.renderMask();
       const png = await encodeMonoPng(mask, width, height);
-      await printPng(png, copies);
+      await printPng(png, copies, mode);
       printResult.textContent =
         copies > 1
-          ? `printed ${copies} × (${formatMm(pxToMm(width))})`
+          ? mode === "cutmark"
+            ? `printed ${copies} on one strip — cut at the marks`
+            : `printed ${copies} × (${formatMm(pxToMm(width))})`
           : `printed (${formatMm(pxToMm(width))})`;
       printResult.className = "ok";
     } catch (error) {

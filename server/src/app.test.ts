@@ -100,6 +100,20 @@ describe("POST /api/print", () => {
       payload: PNG,
     });
     expect(ok.statusCode).toBe(200);
+    const cutmark = await app.inject({
+      method: "POST",
+      url: "/api/print?copies=3&mode=cutmark",
+      headers: { "content-type": "image/png" },
+      payload: PNG,
+    });
+    expect(cutmark.statusCode).toBe(200);
+    const badMode = await app.inject({
+      method: "POST",
+      url: "/api/print?copies=3&mode=zigzag",
+      headers: { "content-type": "image/png" },
+      payload: PNG,
+    });
+    expect(badMode.statusCode).toBe(400);
     for (const bad of ["0", "-2", "1.5", "101", "many"]) {
       const res = await app.inject({
         method: "POST",
