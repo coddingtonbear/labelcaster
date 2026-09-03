@@ -16,7 +16,8 @@
         <button id="tool-erase" class="tool icon-btn" type="button" title="Erase — draws in white (E)" aria-label="Erase">◻</button>
       </div>
       <label class="icon-btn button-like" title="Insert image" aria-label="Insert image">🖼<input id="image-file" type="file" accept="image/*" hidden /></label>
-      <button id="designs-button" class="icon-btn" type="button" title="Save / load designs" aria-label="Designs">📁</button>
+      <button id="design-download" class="icon-btn" type="button" title="Download design as a file" aria-label="Download design">⬇</button>
+      <label class="icon-btn button-like" title="Open a design file" aria-label="Open design">📂<input id="design-file" type="file" accept=".labelcaster.json,application/json" hidden /></label>
       <span class="spacer"></span>
       <span id="printer-status" class="status status-unknown">checking printer…</span>
       <button id="print-button" type="button" disabled>🖨 Print</button>
@@ -76,20 +77,6 @@
     <footer>
       <span id="print-result"></span>
     </footer>
-
-    <dialog id="designs-dialog">
-      <h2>Designs</h2>
-      <div class="design-save-row">
-        <input id="design-name" type="text" maxlength="64" placeholder="Design name"
-               pattern="[A-Za-z0-9][A-Za-z0-9 _()\-]{0,63}" />
-        <button id="design-save" type="button">Save current</button>
-      </div>
-      <ul id="design-list"></ul>
-      <div class="design-dialog-footer">
-        <span id="design-dialog-status"></span>
-        <button id="designs-close" type="button">Close</button>
-      </div>
-    </dialog>
 
     <script type="module" src="/src/main.ts"></script>
   </body>

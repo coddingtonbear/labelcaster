@@ -1,5 +1,4 @@
 node_modules/
 dist/
-/designs/
 *.log
 .DS_Store
