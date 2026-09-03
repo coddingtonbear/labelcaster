@@ -1,4 +1,4 @@
-import { Canvas, FabricImage, IText, PencilBrush } from "fabric";
+import { Canvas, FabricImage, IText, Path, PencilBrush } from "fabric";
 import { thresholdToMask } from "./threshold.js";
 
 export type Tool = "select" | "text" | "draw" | "erase";
@@ -165,6 +165,28 @@ export class LabelEditor {
     } finally {
       URL.revokeObjectURL(url);
     }
+  }
+
+  /** Populate sample content (?demo) — for screenshots and printerless demos. */
+  loadDemo(): void {
+    const h = this.heightPx;
+    const text = new IText("Hello, labelcaster!", {
+      left: 10,
+      top: h / 2,
+      originY: "center",
+      fontFamily: "Oswald",
+      fontSize: Math.max(12, Math.round(h * 0.6)),
+      fill: "black",
+    });
+    this.canvas.add(text);
+    const heart = new Path(
+      "M12 21s-8-4.5-8-11a4 4 0 0 1 8-2 4 4 0 0 1 8 2c0 6.5-8 11-8 11z",
+      { fill: "black", originY: "center" },
+    );
+    heart.scaleToHeight(h * 0.55);
+    heart.set({ left: 10 + (text.width ?? 0) + h * 0.25, top: h / 2 });
+    this.canvas.add(heart);
+    this.canvas.requestRenderAll();
   }
 
   deleteSelection(): void {

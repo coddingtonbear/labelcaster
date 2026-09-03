@@ -375,5 +375,9 @@ printButton.addEventListener("click", () => {
 });
 
 updateLengthReadout();
-void checkStatus();
-void initFonts();
+void Promise.all([checkStatus(), initFonts()]).then(() => {
+  const demo = new URLSearchParams(location.search).get("demo");
+  if (demo === null) return;
+  editor?.loadDemo();
+  if (demo === "preview") setView("preview");
+});
