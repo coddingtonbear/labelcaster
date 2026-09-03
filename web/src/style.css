@@ -6,6 +6,12 @@
   color: #1c1917;
 }
 
+/* Author display rules (e.g. .control's inline-flex) would otherwise
+   override the UA's [hidden] handling. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   padding: 1rem 1.5rem;
