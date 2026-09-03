@@ -6,8 +6,7 @@ bitmap to [`ptouch-print`](https://mockmoon-cybernetics.ch/computer/p-touch2430p
 Point it at the machine your printer is plugged into and design labels from
 any device on your network — phone included.
 
-<!-- TODO(s3): replace IMAGE_BASE with the S3 bucket URL hosting the screenshots -->
-![The label editor](IMAGE_BASE/editor.png)
+![The label editor](https://coddingtonbear-public.s3.amazonaws.com/github/labelcaster/editor.png)
 
 ## Features
 
@@ -23,7 +22,7 @@ any device on your network — phone included.
 - **Honest 1-bit preview** — the Preview tab shows exactly the thresholded
   black/white raster the printer will receive, not the anti-aliased canvas.
 
-  ![The 1-bit print preview](IMAGE_BASE/preview.png)
+  ![The 1-bit print preview](https://coddingtonbear-public.s3.amazonaws.com/github/labelcaster/preview.png)
 
 - **Fit** — one click trims (or grows) the label so the right margin matches
   the left, with a live "label will be X mm long" readout (180 dpi).
@@ -40,7 +39,7 @@ any device on your network — phone included.
   light/dark preference automatically. The canvas stays white either way —
   it's the tape.
 
-  ![Dark mode](IMAGE_BASE/dark.png)
+  ![Dark mode](https://coddingtonbear-public.s3.amazonaws.com/github/labelcaster/dark.png)
 
 Append `?demo` to the URL to load sample content (or `?demo=preview` to land
 on the Preview tab) — handy for trying the editor without a printer.
