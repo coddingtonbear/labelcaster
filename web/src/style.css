@@ -231,12 +231,44 @@ footer {
   min-height: 1.5rem;
 }
 
+.print-group {
+  position: relative;
+  display: inline-flex;
+}
+
 #print-button {
   font-size: 0.95rem;
   padding: 0.45rem 1.2rem;
   background: var(--accent);
   color: white;
   border: none;
+  border-radius: 6px 0 0 6px;
+}
+
+#print-copies-toggle {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-left: 1px solid rgb(255 255 255 / 0.35);
+  border-radius: 0 6px 6px 0;
+  padding: 0.45rem 0.5rem;
+}
+
+#print-button:disabled + #print-copies-toggle {
+  opacity: 0.5;
+}
+
+#copies-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 10;
+  padding: 0.6rem 0.75rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--shadow);
+  white-space: nowrap;
 }
 
 #print-result { font-size: 0.9rem; }
@@ -277,11 +309,11 @@ footer {
 
   .tool-group,
   header .button-like,
-  #print-button {
+  .print-group {
     order: 1;
   }
 
-  #print-button {
+  .print-group {
     margin-left: auto;
   }
 

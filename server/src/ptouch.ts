@@ -169,8 +169,8 @@ export class PtouchClient {
     return this.enqueue(() => this.statusNow());
   }
 
-  print(png: Buffer): Promise<PrintResult> {
-    return this.enqueue(() => this.printNow(png));
+  print(png: Buffer, copies = 1): Promise<PrintResult> {
+    return this.enqueue(() => this.printNow(png, copies));
   }
 
   private async statusNow(): Promise<PrinterStatus> {
@@ -183,12 +183,18 @@ export class PtouchClient {
     return parseInfo(result.stdout);
   }
 
-  private async printNow(png: Buffer): Promise<PrintResult> {
+  private async printNow(png: Buffer, copies: number): Promise<PrintResult> {
     const dir = await mkdtemp(join(tmpdir(), "labelcaster-"));
     const file = join(dir, "label.png");
     try {
       await writeFile(file, png);
-      const args = this.precut ? ["--precut", "--image", file] : ["--image", file];
+      const args = [
+        ...(this.precut ? ["--precut"] : []),
+        // Only sent when >1: older ptouch-print builds don't know --copies.
+        ...(copies > 1 ? [`--copies=${copies}`] : []),
+        "--image",
+        file,
+      ];
       const result = await this.exec(this.binary, args);
       if (result.code !== 0) {
         return {

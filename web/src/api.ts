@@ -60,8 +60,9 @@ export async function fetchStatus(): Promise<PrinterStatus> {
   return (await res.json()) as PrinterStatus;
 }
 
-export async function printPng(png: Uint8Array): Promise<string> {
-  const res = await fetch("/api/print", {
+export async function printPng(png: Uint8Array, copies = 1): Promise<string> {
+  const url = copies > 1 ? `/api/print?copies=${copies}` : "/api/print";
+  const res = await fetch(url, {
     method: "POST",
     headers: { "content-type": "image/png" },
     body: png as BodyInit,

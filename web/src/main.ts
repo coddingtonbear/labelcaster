@@ -395,18 +395,49 @@ designFileInput.addEventListener("change", () => {
 
 // --- Print -------------------------------------------------------------
 
+const copiesPopover = element<HTMLDivElement>("copies-popover");
+const copiesToggle = element<HTMLButtonElement>("print-copies-toggle");
+const copiesInput = element<HTMLInputElement>("copies-input");
+
+function currentCopies(): number {
+  const n = Number.parseInt(copiesInput.value, 10);
+  return Number.isInteger(n) && n >= 1 && n <= 100 ? n : 1;
+}
+
+function updatePrintLabel(): void {
+  const copies = currentCopies();
+  printButton.textContent = copies > 1 ? `🖨 Print ×${copies}` : "🖨 Print";
+}
+
+copiesToggle.addEventListener("click", (event) => {
+  event.stopPropagation();
+  copiesPopover.hidden = !copiesPopover.hidden;
+  if (!copiesPopover.hidden) copiesInput.select();
+});
+
+copiesInput.addEventListener("input", updatePrintLabel);
+copiesPopover.addEventListener("click", (event) => event.stopPropagation());
+document.addEventListener("click", () => {
+  copiesPopover.hidden = true;
+});
+
 printButton.addEventListener("click", () => {
   void (async () => {
     if (!editor || !printerAvailable || printing) return;
+    const copies = currentCopies();
     printing = true;
     printButton.disabled = true;
-    printResult.textContent = "printing…";
+    copiesPopover.hidden = true;
+    printResult.textContent = copies > 1 ? `printing ${copies} copies…` : "printing…";
     printResult.className = "";
     try {
       const { mask, width, height } = editor.renderMask();
       const png = await encodeMonoPng(mask, width, height);
-      await printPng(png);
-      printResult.textContent = `printed (${formatMm(pxToMm(width))})`;
+      await printPng(png, copies);
+      printResult.textContent =
+        copies > 1
+          ? `printed ${copies} × (${formatMm(pxToMm(width))})`
+          : `printed (${formatMm(pxToMm(width))})`;
       printResult.className = "ok";
     } catch (error) {
       printResult.textContent = error instanceof Error ? error.message : String(error);

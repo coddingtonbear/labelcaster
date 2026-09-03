@@ -20,7 +20,15 @@
       <label class="icon-btn button-like" title="Open a design file" aria-label="Open design">📂<input id="design-file" type="file" accept=".labelcaster.json,application/json" hidden /></label>
       <span class="spacer"></span>
       <span id="printer-status" class="status status-unknown">checking printer…</span>
-      <button id="print-button" type="button" disabled>🖨 Print</button>
+      <div class="print-group">
+        <button id="print-button" type="button" disabled>🖨 Print</button>
+        <button id="print-copies-toggle" type="button" title="Number of copies" aria-label="Number of copies">▾</button>
+        <div id="copies-popover" hidden>
+          <label class="control">Copies
+            <input id="copies-input" type="number" min="1" max="100" value="1" />
+          </label>
+        </div>
+      </div>
     </header>
 
     <section id="context-row" aria-label="Tool settings">

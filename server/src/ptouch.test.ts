@@ -97,6 +97,19 @@ describe("PtouchClient", () => {
     expect(printArgs?.[2]).toMatch(/labelcaster-.*label\.png$/);
   });
 
+  it("passes --copies only when printing more than one", async () => {
+    const calls: string[][] = [];
+    const exec: Exec = (_binary, args) => {
+      calls.push(args);
+      return Promise.resolve({ code: 0, stdout: "", stderr: "" });
+    };
+    const client = new PtouchClient({ binary: "ptouch-print", exec });
+    await client.print(PNG, 3);
+    await client.print(PNG); // default: one copy
+    expect(calls[0]?.slice(0, 2)).toEqual(["--precut", "--copies=3"]);
+    expect(calls[1]?.slice(0, 2)).toEqual(["--precut", "--image"]);
+  });
+
   it("omits --precut when disabled (older ptouch-print builds)", async () => {
     let printArgs: string[] | undefined;
     const exec: Exec = (_binary, args) => {

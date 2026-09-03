@@ -91,6 +91,26 @@ describe("POST /api/print", () => {
     expect(res.json()).toEqual({ ok: true, output: "" });
   });
 
+  it("accepts a copies query and rejects invalid counts", async () => {
+    const app = appWith(okExec);
+    const ok = await app.inject({
+      method: "POST",
+      url: "/api/print?copies=5",
+      headers: { "content-type": "image/png" },
+      payload: PNG,
+    });
+    expect(ok.statusCode).toBe(200);
+    for (const bad of ["0", "-2", "1.5", "101", "many"]) {
+      const res = await app.inject({
+        method: "POST",
+        url: `/api/print?copies=${bad}`,
+        headers: { "content-type": "image/png" },
+        payload: PNG,
+      });
+      expect(res.statusCode).toBe(400);
+    }
+  });
+
   it("rejects non-PNG bodies", async () => {
     const res = await appWith(okExec).inject({
       method: "POST",
