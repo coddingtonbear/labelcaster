@@ -50,12 +50,15 @@
     </section>
 
     <main>
-      <div class="canvas-scroll">
+      <div class="view-tabs" role="tablist" aria-label="Canvas view">
+        <button id="view-edit" class="view-tab active" type="button" role="tab">Edit</button>
+        <button id="view-preview" class="view-tab" type="button" role="tab">Preview</button>
+      </div>
+      <div class="canvas-scroll" id="editor-view">
         <div id="canvas-holder"><canvas id="editor"></canvas></div>
       </div>
-      <div class="preview-block">
-        <span class="preview-title">print preview (1-bit)</span>
-        <div class="canvas-scroll"><canvas id="preview"></canvas></div>
+      <div class="canvas-scroll" id="preview-view" hidden>
+        <canvas id="preview"></canvas>
       </div>
     </main>
 

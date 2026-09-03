@@ -116,15 +116,24 @@ button:disabled {
   background: white;
 }
 
-.preview-block {
-  margin-top: 0.5rem;
+.view-tabs {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px 6px 0 0;
+  border-bottom: none;
+  overflow: hidden;
+  background: white;
 }
 
-.preview-title {
-  font-size: 0.8rem;
-  color: #57534e;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.view-tab {
+  border: none;
+  border-radius: 0;
+  border-right: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.view-tab:last-child {
+  border-right: none;
 }
 
 #preview {

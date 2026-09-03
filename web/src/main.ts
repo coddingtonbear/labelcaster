@@ -21,6 +21,10 @@ const tapeInfo = element<HTMLSpanElement>("tape-info");
 const lengthInput = element<HTMLInputElement>("label-length");
 const lengthReadout = element<HTMLSpanElement>("length-readout");
 const previewCanvas = element<HTMLCanvasElement>("preview");
+const editorView = element<HTMLDivElement>("editor-view");
+const previewView = element<HTMLDivElement>("preview-view");
+const editTab = element<HTMLButtonElement>("view-edit");
+const previewTab = element<HTMLButtonElement>("view-preview");
 const printButton = element<HTMLButtonElement>("print-button");
 const printResult = element<HTMLSpanElement>("print-result");
 
@@ -40,9 +44,20 @@ function updateLengthReadout(): void {
   lengthReadout.textContent = `${px}px — label will be ${formatMm(pxToMm(px))} long`;
 }
 
+function setView(view: "edit" | "preview"): void {
+  editorView.hidden = view !== "edit";
+  previewView.hidden = view !== "preview";
+  editTab.classList.toggle("active", view === "edit");
+  previewTab.classList.toggle("active", view === "preview");
+  if (view === "preview") schedulePreview();
+}
+
+editTab.addEventListener("click", () => setView("edit"));
+previewTab.addEventListener("click", () => setView("preview"));
+
 function schedulePreview(): void {
   requestAnimationFrame(() => {
-    if (!editor) return;
+    if (!editor || previewView.hidden) return;
     const { mask, width, height } = editor.renderMask();
     previewCanvas.width = width;
     previewCanvas.height = height;
@@ -162,6 +177,7 @@ const toolButtons: Record<Tool, HTMLButtonElement> = {
 };
 
 function setActiveTool(tool: Tool): void {
+  setView("edit"); // picking a tool while previewing returns to editing
   editor?.setTool(tool);
   for (const [name, button] of Object.entries(toolButtons)) {
     button.classList.toggle("active", name === tool);
