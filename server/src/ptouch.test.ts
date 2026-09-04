@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parseInfo, PtouchClient, type Exec, type ExecResult } from "./ptouch.js";
 
@@ -127,6 +128,21 @@ describe("PtouchClient", () => {
     expect(args.filter((a) => a === "--image")).toHaveLength(3);
     expect(args.filter((a) => a === "--cutmark")).toHaveLength(2);
     expect(args[args.length - 2]).toBe("--image");
+  });
+
+  it("cutmark mode keeps the temp PNG alive until ptouch-print has run", async () => {
+    let existedDuringExec: boolean | undefined;
+    const exec: Exec = async (_binary, args) => {
+      // A real child process opens the file some time after spawn; a fake that
+      // checks synchronously would pass even if the caller had already
+      // scheduled the temp dir for deletion.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      existedDuringExec = existsSync(args[args.length - 1] ?? "");
+      return { code: 0, stdout: "", stderr: "" };
+    };
+    const client = new PtouchClient({ binary: "ptouch-print", exec });
+    await expect(client.print(PNG, 2, "cutmark")).resolves.toEqual({ ok: true, output: "" });
+    expect(existedDuringExec).toBe(true);
   });
 
   it("cutmark mode with one copy is just a normal single print", async () => {

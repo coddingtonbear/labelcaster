@@ -215,7 +215,10 @@ export class PtouchClient {
           if (i > 0) withMarks.push("--cutmark");
           withMarks.push("--image", file);
         }
-        return this.runPrintJob([...precut, ...withMarks], "");
+        // `await` matters: returning the bare promise would leave the try block
+        // and run the finally (which deletes the temp dir) before ptouch-print
+        // has even started, so it would fail with "failed to load image file".
+        return await this.runPrintJob([...precut, ...withMarks], "");
       }
       let lastResult: PrintResult = { ok: true, output: "" };
       for (let copy = 1; copy <= copies; copy++) {
