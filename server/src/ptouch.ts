@@ -97,6 +97,19 @@ export interface ExecResult {
   stderr: string;
 }
 
+/**
+ * Everything ptouch-print said, both streams. It prints the "<model> found on
+ * USB bus …" banner to stderr and the actual failure reason ("failed to load
+ * image file", "ptouch_getstatus() failed", …) to stdout, so preferring one
+ * stream over the other hides the part that matters.
+ */
+export function failureText(result: ExecResult): string {
+  return [result.stderr, result.stdout]
+    .map((text) => text.trim())
+    .filter((text) => text.length > 0)
+    .join("\n");
+}
+
 export type Exec = (binary: string, args: string[]) => Promise<ExecResult>;
 
 /** Default exec: run the real binary with a C locale so output is parseable. */
@@ -176,9 +189,7 @@ export class PtouchClient {
   private async statusNow(): Promise<PrinterStatus> {
     const result = await this.exec(this.binary, ["--info"]);
     if (result.code !== 0) {
-      throw new Error(
-        `ptouch-print --info failed (exit ${result.code}): ${(result.stderr || result.stdout).trim()}`,
-      );
+      throw new Error(`ptouch-print --info failed (exit ${result.code}): ${failureText(result)}`);
     }
     return parseInfo(result.stdout);
   }
@@ -221,10 +232,7 @@ export class PtouchClient {
   private async runPrintJob(args: string[], which: string): Promise<PrintResult> {
     const result = await this.exec(this.binary, args);
     if (result.code !== 0) {
-      return {
-        ok: false,
-        message: `ptouch-print exited ${result.code}${which}: ${(result.stderr || result.stdout).trim()}`,
-      };
+      return { ok: false, message: `ptouch-print exited ${result.code}${which}: ${failureText(result)}` };
     }
     // ptouch-print reports some failures on stdout with a zero exit code
     // (e.g. "image is too large"), so treat any "failed"/"too large" text

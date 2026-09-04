@@ -160,6 +160,38 @@ describe("PtouchClient", () => {
     expect(n).toBe(2); // third copy not attempted
   });
 
+  it("reports both streams on failure: the USB banner is stderr, the reason is stdout", async () => {
+    const client = new PtouchClient({
+      binary: "ptouch-print",
+      exec: fakeExec({
+        "--precut": {
+          code: 1,
+          stdout: "failed to load image file\n",
+          stderr: "PT-P710BT found on USB bus 1, device 7\n",
+        },
+      }),
+    });
+    await expect(client.print(PNG)).resolves.toEqual({
+      ok: false,
+      message:
+        "ptouch-print exited 1: PT-P710BT found on USB bus 1, device 7\nfailed to load image file",
+    });
+  });
+
+  it("includes the stdout reason when --info fails", async () => {
+    const client = new PtouchClient({
+      binary: "ptouch-print",
+      exec: fakeExec({
+        "--info": {
+          code: 1,
+          stdout: "ptouch_getstatus() failed\n",
+          stderr: "PT-P710BT found on USB bus 1, device 7\n",
+        },
+      }),
+    });
+    await expect(client.status()).rejects.toThrow(/found on USB.*ptouch_getstatus\(\) failed/s);
+  });
+
   it("omits --precut when disabled (older ptouch-print builds)", async () => {
     let printArgs: string[] | undefined;
     const exec: Exec = (_binary, args) => {
